@@ -31,12 +31,12 @@ for cc = CamNo
         cam_str = ['0',cam_str];
     end
     
-    bg=imread([datadir,filesep,'Cam',cam_str,filesep,'bckgnd.jpg']);% Back ground image
+    bg=imread([datadir,filesep,'Cam',cam_str,filesep,'bckgnd.png']);% Back ground image
     bg=bg(:,:,1);
     h1=fspecial('gaussian',100,30); % Gaussian filter configuration
     bg1=imfilter(bg,h1); % Back ground image blurred
     
-    for FrameNo =  SFrameNo : EFrameNo  
+    for FrameNo =  SFrameNo : EFrameNo - 1
         %% Image Pre-processing
         % The image pre-processing part processes the images from original
         % RGB*3 images into *black and white* images contains only the Feature
@@ -47,7 +47,7 @@ for cc = CamNo
             strnum = ['0',strnum];
         end
         
-        bat=imread([datadir,filesep,'Cam',cam_str,filesep,strnum,'.jpg']); % Bat image
+        bat=imread([datadir,filesep,'Cam',cam_str,filesep,strnum,'.png']); % Bat image
         bat=bat(:,:,1);
         %figure;imshow(bat);
 
@@ -66,10 +66,18 @@ for cc = CamNo
         %%
         % Local adaptive threshold segmentation
         %cd('bwbat')
-   
-        bwbat = importdata([datadir,filesep,'Cam',cam_str,filesep,'bwbat',strnum,'.mat']);
-        RightMax=FarRight(bwbat); % Find out the rightmost pixel of bat's body
-        LeftMin=FarLeft(bwbat); % Find out the leftmost pixel of bat's body
+        if exist([datadir,filesep,'Cam',cam_str,filesep,'bwbat',strnum,'.mat'], 'file')
+            bwbat = importdata([datadir,filesep,'Cam',cam_str,filesep,'bwbat',strnum,'.mat']);
+            RightMax=FarRight(bwbat); % Find out the rightmost pixel of bat's body
+            LeftMin=FarLeft(bwbat); % Find out the leftmost pixel of bat's body
+
+        else
+            RightMax = Cam(cc).b_box(FrameNo-SFrameNo+1,1)+Cam(cc).b_box(FrameNo-SFrameNo+1,3);
+            LeftMin  = Cam(cc).b_box(FrameNo-SFrameNo+1,1);
+            bwbat    = zeros(720,1280);
+            bwbat(Cam(cc).b_box(FrameNo-SFrameNo+1,2):Cam(cc).b_box(FrameNo-SFrameNo+1,2)+Cam(cc).b_box(FrameNo-SFrameNo+1,4),...
+                Cam(cc).b_box(FrameNo-SFrameNo+1,1):Cam(cc).b_box(FrameNo-SFrameNo+1,1)+Cam(cc).b_box(FrameNo-SFrameNo+1,3)) = 1;
+        end
         %cd ../
         %cd ../
 
@@ -127,14 +135,15 @@ for cc = CamNo
 %         else
             %cd ('SeniorDesign_updated_5_22(in use)')
             %%
-
-            for i = 1 :720
-                for k = 1 : 1280
-                    bb(i,k)=double(bwbat0(i,k))*bat(i,k);
-                end
-            end
+%             for i = 1 :720
+%                 for k = 1 : 1280
+%                     bb(i,k)=double(bwbat0(i,k))*bat(i,k);
+%                 end
+%             end 
+            bb=bwbat0.*double(bat);
             [em,level]=otsu_test1(bg,bat);
-            a=0.1*em+(level-0.3647)/20;
+            %a=0.1*em+(level-0.3647)/20;
+            a=0.1*em+(level-0.1)/20;
             newbat=im2bw(bb,a);  % Bat's body with noises
 
             % de-noise
@@ -143,17 +152,18 @@ for cc = CamNo
             BW1=bwareaopen(BW,2,4);
         %end
 
-        for i=1:720
-            F=find(bwbat(i,:)~=0, 1, 'first');
-            L=find(bwbat(i,:)~=0, 1, 'last' );
-            if ~(isempty(F)&&isempty(L))
-                for j=1:1280
-                    if (j<F+3&&BW1(i,j)==1)||(BW1(i,j)==1&&j>L-4)
-                        BW1(i,j)=0;
-                    end
-                end
-            end
-        end
+%         for i=1:720
+%             F=find(bwbat(i,:)~=0, 1, 'first');
+%             L=find(bwbat(i,:)~=0, 1, 'last' );
+%             if ~(isempty(F)&&isempty(L))
+%                 for j=1:1280
+%                     if (j<F+3&&BW1(i,j)==1)||(BW1(i,j)==1&&j>L-4)
+%                         BW1(i,j)=0;
+%                     end
+%                 end
+%             end
+%         end
+        BW1(~bwbat)=0;
 
 
         %% Feature Extraction
@@ -170,8 +180,7 @@ for cc = CamNo
         plot(centroids(1,:)',centroids(2,:)','*r');hold on
         % put the feature points in the camera structure
         Cam(cc).im_feat{FrameNo} = centroids;
-        
-        
+
         %     cd ../
     %     cd ('YS_PointData\LOCAL')
     %     fid=fopen(['Points',num2str(FrameNo)],'w');
