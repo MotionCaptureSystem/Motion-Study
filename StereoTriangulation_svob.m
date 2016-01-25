@@ -7,6 +7,7 @@ timesteps = options.stereo.tstart:options.stereo.dt:options.stereo.tstop;
 nsteps    = length(timesteps);
 linestyle1 = options.plot.linestyle1;
 plot_start = options.stereo.tstart;
+fs = 120;
 %% Perform Stereo Triangulation for Comparision
 npair = 0;
 pair_list = [];
@@ -19,21 +20,17 @@ end
 
 %Determine stereo reconstructions of each pair of cams with new extrinsics
 stereostruct = struct([]);
-for pair = 1:npair
+for pair = [1:npair]
     for pp = 1:npts
         for kk = 1:nsteps
             %if ~isempty(intersect(pp,camstruct(pair_list(pair,1)).idin(1,pp))) && ~isempty(intersect(pp,camstruct(pair_list(pair,2)).idin(1,pp)))
                 camstruct1 = camstruct(pair_list(pair,1));
                 camstruct2 = camstruct(pair_list(pair,2));
-                stereostruct(pair).pts(:,kk,pts(pp)) = stertridet2_svob(camstruct1.pts_rect(:,timesteps(kk)-camstruct1.start_frame+1+round(camstruct1.sync_del*119.88),pts(pp)), ...
-                                                   camstruct2.pts_rect(:,timesteps(kk)-camstruct2.start_frame+1+round(camstruct2.sync_del*119.88),pts(pp)), ...
+                stereostruct(pair).pts(:,kk,pts(pp)) = stertridet2_svob(camstruct1.pts_sync(:,timesteps(kk)-camstruct1.start_frame+1+floor(camstruct1.sync_del*fs),pts(pp)), ...
+                                                   camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs),pts(pp)), ...
                                                    camstruct1,camstruct2);
-            %else
-            %    stereostruct(pair).pts = [];
-            %end
             
             stereostruct(pair).cams = pair_list(pair,:);
-
         end
     end
 end
@@ -101,7 +98,7 @@ for pair = 1:npair
     end
 end
 %legend('PT 2 Cams 1 and 2', 'PT 2 Cams 1 and 3', 'PT 2 Cams 2 and 3')
-H = reshape([camstruct.H],4,4,[]);
+H = reshape([camstruct(cams).H],4,4,[]);
 CFPlot(H, 0.1)
 axis equal
 set(gca, 'FontSize', 16, 'CameraPosition', [0, 0, 0])

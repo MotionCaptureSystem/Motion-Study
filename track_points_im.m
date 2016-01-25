@@ -339,20 +339,25 @@ function [x_k, R_k] = mm_spline(x_kprev, t)
 %     x_kprev = x_kprev(:,end-3:end);
 % end
 % 
- [nstates, ~] = size(x_kprev);
+[nstates, ~] = size(x_kprev);
 % x_k = zeros(nstates,1);
-% for nn = 1:nstates
-%     x_k(nn) = spline(t,x_kprev(nn,:),2*t(end)-t(end-1));
+% for nn = 1:nstates/2
+%     x_coords = x_kprev(2*(nn-1)+1,:);
+%     y_coords = x_kprev(2*nn,:);
+%     x_new = 2*x_coords(end)-x_coords(end-1);
+%     y_new = 2*y_coords(end)-y_coords(end-1);
+%     x_k(2*(nn-1)+1) = (spline(y_coords,x_coords,y_new)+x_new)/2;
+%     x_k(2*nn)       = (spline(x_coords,y_coords,x_new)+y_new)/2;
 % end
 
-dx = x_kprev(:,end)-x_kprev(:,end-1);
-avg_dx = [mean(dx(1:2:nstates));mean(dx(2:2:nstates))];
-delta = zeros(nstates,1);
-delta(1:2:nstates,1) = avg_dx(1);
-delta(2:2:nstates,1) = avg_dx(2);
-x_k = x_kprev(:,end) + delta;
+% dx = x_kprev(:,end)-x_kprev(:,end-1);
+% avg_dx = [mean(dx(1:2:nstates));mean(dx(2:2:nstates))];
+% delta = zeros(nstates,1);
+% delta(1:2:nstates,1) = avg_dx(1);
+% delta(2:2:nstates,1) = avg_dx(2);
+% x_k = x_kprev(:,end) + delta;
 
-%x_k = 2*x_kprev(:,end)-x_kprev(:,end-1);
+x_k = 2*x_kprev(:,end)-x_kprev(:,end-1);
 
 R_k = 50*eye(nstates);
 

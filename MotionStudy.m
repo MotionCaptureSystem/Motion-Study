@@ -22,7 +22,7 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 07-Dec-2015 16:24:16
+% Last Modified by GUIDE v2.5 04-Jan-2016 23:32:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -230,12 +230,11 @@ for cc = handles.options.cams
         hold on
         plot(handles.Cam(cc).features{ii}.Location(:,1), handles.Cam(cc).features{ii}.Location(:,2),'+r')
         hold off
+        pause
         guidata(hObject, handles);
         end
     end
 end
-
-
 
 
 % --------------------------------------------------------------------
@@ -267,8 +266,8 @@ function point_pick_Callback(hObject, eventdata, handles)
 
 %handles.Cam = track_points_im(handles.Cam,handles.options.path);
 setappdata(0,'MStudyHands', handles);
-PointPropagatorV1
 try 
+    PointPropagatorV1
     uiwait 
 catch ME, 
     MStudyHandles = getappdata(0,'MStudyHands');
@@ -284,6 +283,10 @@ function intrinsic_caltech_Callback(hObject, eventdata, handles)
 % hObject    handle to intrinsic_caltech (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+cams = input('Import INTRINSIC parameters for which Cameras?:');
+[handles.Cam] = load_caltech_intrinsic(handles.Cam,handles.options,cams);
+guidata(hObject,handles);
 
 
 
@@ -441,6 +444,10 @@ function audio_sync_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
+%handles.Cam(309).sync_del = 3.75/119.8;
+%handles.Cam(310).sync_del = 0.8/119.8;
+%handles.Cam(318).sync_del = 1/119.8;
+[handles.Cam] = subframe_sync(handles.Cam);
 guidata(hObject,handles);
 
 
@@ -503,3 +510,42 @@ for c = cams
 end
 
 guidata(hObject,handles);
+
+% --------------------------------------------------------------------
+function rm_points_Callback(hObject, eventdata, handles)
+% hObject    handle to rm_points (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+cams = input('Enter the CAMERAS which you would like to remove points from: ');
+pts = input('Enter the POINT numbers you would like to visualize:');
+for cam = cams
+    figure
+    hold on
+    for pp = pts
+        %plot the distorted features
+        plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','+r');
+        plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','-b');
+        %plot the undistorted features
+        plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','og');
+        plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','-k');    
+        %plot the synchronized featured
+        plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','^b');
+        plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','-m');  
+    end
+    title(['Camera ',num2str(cam)]);
+end
+
+% --------------------------------------------------------------------
+function scale_extrinsics_Callback(hObject, eventdata, handles)
+% hObject    handle to scale_extrinsics (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+scale = input('By what factor would you like to scale extrinsics?:');
+
+for cc = 1:length(handles.Cam)
+    if ~isempty(handles.Cam(cc).H)
+        handles.Cam(cc).H(1:3,4) = handles.Cam(cc).H(1:3,4)*scale;
+    end
+end
+guidata(hObject,handles)

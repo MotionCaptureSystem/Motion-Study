@@ -22,7 +22,7 @@ function varargout = PointPropagatorV1(varargin)
 
 % Edit the above text to modify the response to help PointPropagatorV1
 
-% Last Modified by GUIDE v2.5 07-Dec-2015 09:02:40
+% Last Modified by GUIDE v2.5 15-Jan-2016 10:29:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -140,6 +140,14 @@ function current_cam_Callback(hObject, eventdata, handles)
 current_cam = str2double(get(hObject,'String'));
 start_frame = handles.Cam(current_cam).start_frame;
 end_frame = handles.Cam(current_cam).end_frame;
+
+if ~isfield(handles.Cam(current_cam),'sync_del')
+    set(handles.sync_del,'String','NA')
+elseif isempty(handles.Cam(current_cam).sync_del)
+    set(handles.sync_del,'String','NA')
+else
+    set(handles.sync_del,'String',num2str(handles.Cam(current_cam).sync_del*119.88))
+end
 
 % If the frames have not been imported, then import them.
 if isempty(handles.Cam(current_cam).frames)
@@ -604,3 +612,41 @@ pt_num = str2double(get(handles.current_point_label,'String'));
 handles.Cam(cam).pts(:,timestep,pt_num) = [NaN;NaN];
 plot_points(hObject, handles)
 guidata(hObject,handles);
+
+
+% --- Executes on button press in delete_multi.
+function delete_multi_Callback(hObject, eventdata, handles)
+% hObject    handle to delete_multi (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+cam = str2double(get(handles.current_cam,'String'));
+pt_nums = input('Which pts would you like to delete?:');
+timesteps = input('Which timesteps would you like to delete?:')- handles.Cam(cam).start_frame+1;
+
+handles.Cam(cam).pts(:,timesteps,pt_nums) = NaN*ones(2,length(timesteps),length(pt_nums));
+plot_points(hObject, handles)
+guidata(hObject,handles);
+
+
+
+function sync_del_Callback(hObject, eventdata, handles)
+% hObject    handle to sync_del (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of sync_del as text
+%        str2double(get(hObject,'String')) returns contents of sync_del as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function sync_del_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sync_del (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
