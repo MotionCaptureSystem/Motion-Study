@@ -12,7 +12,7 @@ npts = length(x)/(2*ncam);
 
     for cc = 1:ncam         %for each camera
         K = camstruct(cams(cc)).K;
-        dist_c = camstruct(cams(cc)).dist_c;
+        dist_c = camstruct(cams(cc)).kc;
         for pp = 1:npts
             x_n = [1 0 0 ; 0 1 0]*inv(K)*[x((cc-1)*2*npts+2*(pp-1)+1:(cc-1)*2*npts+2*pp);1];
             r = norm(x_n);

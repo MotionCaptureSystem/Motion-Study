@@ -1,7 +1,8 @@
 function reproj_error(camstruct, inertstruct, options)
 %proj error flight 3 progrram flow 
 %% Import Plot Settings
-cams = options.cams;
+cams = options.est.cams;
+camstruct = camstruct(cams);
 link_names = options.link_names;
 ncam = length(cams);
 pts  = options.plot.pts;
@@ -24,7 +25,7 @@ fig_num = options.plot.reprojframe;
 cnt = 0;
 for pp = pts
     cnt = cnt+1;
-    X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.filt.ukf.Features(3*(pp-1)+1:3*pp,3:end);
+    X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(pp-1)+1:3*pp,3:end);
 end
 
 y_k_ukf         = zeros(2*ncam*npts,nsteps);
@@ -34,11 +35,11 @@ meas_dist       = zeros(2*ncam*npts,nsteps);
 %compile measurements into a matrix
 meas = zeros(ncam*npts*2,nsteps);
 for c = 1:ncam
-    load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(cams(c)),filesep,'int_cam',num2str(cams(c)),'.mat'],'KK','kc','fc','cc','alpha_c')
-    camstruct(c).dist_c = kc;
-   
+    %load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(cams(c)),filesep,'int_cam',num2str(cams(c)),'.mat'],'kc')
+    %camstruct(c).dist_c = kc;
+    t = options.tstart-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*120):options.tstop-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*120);
     for pp = 1:npts
-        meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = camstruct(c).pts(:,:,pts(pp));
+        meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = camstruct(c).pts_sync(:,t,options.plot.pts_orig(pp));
     end
 end
 

@@ -18,7 +18,7 @@ lambdas = zeros(npts,1,ncam);
 
     for cc = 1:ncam         %for each camera
         for pp = 1:npts
-            dist_c = camstruct(cams(cc)).dist_c;
+            dist_c = camstruct(cams(cc)).kc;
             x_barkpp = [x_k(3*(pp-1)+1:3*pp);1];
             Hin = invH(camstruct(cams(cc)).H);
             %Determine predicted range to point

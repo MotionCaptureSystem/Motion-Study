@@ -413,9 +413,13 @@ function save_Callback(hObject, eventdata, handles)
 for cc = 1:length(handles.Cam)
     handles.Cam(cc).frames = [];
 end
+fprintf('Saving data ... do not close MATLAB or MOTIONSTUDY ... \n')
 save([handles.options.path,filesep,'CamStruct.mat'], '-struct', 'handles','Cam', '-v7.3')
 if isfield(handles, 'Stereo')
     save([handles.options.path,filesep,'StereoStruct.mat'],'-struct', 'handles','Stereo', '-v7.3')
+end
+if isfield(handles, 'EstStruct')
+    save([handles.options.path,filesep,'EstStruct.mat'],'-struct', 'handles','EstStruct', '-v7.3')
 end
 fprintf('The session has been saved.\n')
 
@@ -619,13 +623,27 @@ function plotting_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 
+
 % --------------------------------------------------------------------
 function traject_est_Callback(hObject, eventdata, handles)
 % hObject    handle to traject_est (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-traj_estimation
+[handles.EstStruct, options] = traj_estimation(handles.Cam, handles.options);
+
+handles.options.link        = options.link;
+handles.options.plot        = options.plot;
+handles.options.est         = options.est;
+handles.options.groups      = options.groups;
+handles.options.link_names  = options.link_names;
+handles.options.dof_names   = options.dof_names;
+handles.options.tstart      = options.tstart;
+handles.options.tstop       = options.tstop;
+handles.options.interp      = options.interp;
+handles.options.plotflag    = options.plotflag ;
+
+guidata(hObject, handles);
 
 
 % --------------------------------------------------------------------
@@ -633,6 +651,7 @@ function est_states_plot_Callback(hObject, eventdata, handles)
 % hObject    handle to est_states_plot (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+Plot_Script_JS(handles.Cam, handles.EstStruct, handles.options)
 
 
 % --------------------------------------------------------------------
@@ -640,7 +659,7 @@ function reproj_plots_Callback(hObject, eventdata, handles)
 % hObject    handle to reproj_plots (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+reproj_error(handles.Cam,handles.EstStruct,handles.options);
 
 % --------------------------------------------------------------------
 function reproj_error_plots_Callback(hObject, eventdata, handles)

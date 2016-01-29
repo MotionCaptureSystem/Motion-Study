@@ -8,7 +8,7 @@ options.dof_names        = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\t
 options.tstart          = 390;                  %Note: due to sync delay the first 
 options.tstop           = 425;                  %Useable timestep will be tstart+1 
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
-options.cams            = [301,302,303,310,312,318,320,325,333];
+options.est.cams        = [301,302,303,310,312,318,320,325,333];
 options.plotflag        = 0;
 options.path            = 'D:\ShandongData2015\Batflight_07242015\Test004';
 options.default_dir     = pwd;
@@ -28,6 +28,7 @@ options.est.state_init      = [-1.093,-0.2433,-0.2678,90*pi/180,-100*pi/180,180*
 
 %Plot Options
 options.plot.pts           = [1,2,3,4,6,7,11,12,14,15,17];
+options.plot.pts_orig      = [4,1,5,6,8,7,10 ,9,14,13,17];
 options.plot.reprojframe   = 405;
 options.plot.tstart        = 6;
 options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
@@ -50,26 +51,26 @@ options      = create_state_vec(options);
 options      = create_meas_vec(options);
 
 %% Load The Camera Measurements
-Cam = handles.Cam(options.cams);
-ncam = length(Cam);
+camstruct = camstruct(options.est.cams);
+ncam = length(camstruct);
 
 for cc = 1:ncam
-    dt = Cam(cc).start_frame-1+floor(options.fs*Cam(cc).sync_del);
-    Cam(cc).pts = [];
-    Cam(cc).pts(:,:,1) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),4);
-    Cam(cc).pts(:,:,2) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),1);
-    Cam(cc).pts(:,:,3) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),5);
+    dt = camstruct(cc).start_frame-1+floor(options.fs*camstruct(cc).sync_del);
+    camstruct(cc).pts = [];
+    camstruct(cc).pts(:,:,1)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),4);
+    camstruct(cc).pts(:,:,2)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),1);
+    camstruct(cc).pts(:,:,3)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),5);
 
-    Cam(cc).pts(:,:,4:5) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),[6:-1:5]);
-    Cam(cc).pts(:,:,6:8) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),[8:-1:6]);
-    Cam(cc).pts(:,:,9) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),8);
-    Cam(cc).pts(:,:,10) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),8);
+    camstruct(cc).pts(:,:,4:5)   = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[6:-1:5]);
+    camstruct(cc).pts(:,:,6:8)   = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[8:-1:6]);
+    camstruct(cc).pts(:,:,9)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),8);
+    camstruct(cc).pts(:,:,10)    = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),8);
 
-    Cam(cc).pts(:,:,11:13) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),[10:-1:8]);
-    Cam(cc).pts(:,:,14:16) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),[14,13,8]);
-    Cam(cc).pts(:,:,17:18) = Cam(cc).pts_sync(:,options.tstart-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88):options.tstop-Cam(cc).start_frame+1+floor(Cam(cc).sync_del*119.88),[17,8]);
-    Cam(cc).pt_assoc = [1,1,1,2,2,3,3,3,4,4,5,5,5,6,6,6,7,7;
-                        1,2,3,1,2,1,2,3,1,2,1,2,3,1,2,3,1,2];
+    camstruct(cc).pts(:,:,11:13) = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[10:-1:8]);
+    camstruct(cc).pts(:,:,14:16) = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[14,13,8]);
+    camstruct(cc).pts(:,:,17:18) = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[17,8]);
+    camstruct(cc).pt_assoc       = [1,1,1,2,2,3,3,3,4,4,5,5,5,6,6,6,7,7;
+                                    1,2,3,1,2,1,2,3,1,2,1,2,3,1,2,3,1,2];
 end
 
 

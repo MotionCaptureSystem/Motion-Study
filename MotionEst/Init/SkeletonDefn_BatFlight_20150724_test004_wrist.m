@@ -166,28 +166,6 @@ for ll = 1:length(synthConfig.link)
     synthConfig.link(ll).BFvecs = vectors;
 end
 
-% synthConfig.link(1).BFvecs(:,4) = [30,0,-5]';
-% synthConfig.link(1).BFvecs(:,5) = [30,0,5]';
-
-%link 2
-% synthConfig.link(2).BFvecs(:,1) = [0,0,0]';
-% synthConfig.link(2).BFvecs(:,2) = [0,-hum_len,0]';
-% 
-% %link 3
-% synthConfig.link(3).BFvecs(:,1) = [0,0,0]';
-% synthConfig.link(3).BFvecs(:,2) = [-rad_len,0,0]';
-% 
-% %link 4
-% synthConfig.link(4).BFvecs(:,1) = [0,0,0]';
-% synthConfig.link(4).BFvecs(:,2) = [-met3_len,0,0]';
-% 
-% %link 5
-% synthConfig.link(5).BFvecs(:,1) = [0,0,0]';
-% synthConfig.link(5).BFvecs(:,2) = [-met4_len,0,0]';
-% 
-% %link 6
-% synthConfig.link(6).BFvecs(:,1) = [0,0,0]';
-% synthConfig.link(6).BFvecs(:,2) = [-met5_len,0,0]';
 %% Define DH params
 nn = 1;
 %----------------------------------Base Body CF Defn---------------------------------------
@@ -215,32 +193,6 @@ synthConfig.link(nn).disps   = [0];
 synthConfig.link(nn).offsets = norm(synthConfig.link(3).BFvecs(:,3));
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 nn = nn+1;
-
-% %----------------------------------Digit 3 Metacarpal CF Defn---------------------------------------
-% met3_len   = norm(synthConfig.link(4).BFvecs(:,3));
-% synthConfig.link(nn).thetas  = [0;0];
-% synthConfig.link(nn).alphas  = [pi/2;0];
-% synthConfig.link(nn).disps   = [0;0];
-% synthConfig.link(nn).offsets = [0;met3_len];
-% synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-% nn = nn+1;
-% 
-% %----------------------------------Digit 4 Metacarpal CF Defn---------------------------------------
-% met4_len   = norm(synthConfig.link(5).BFvecs(:,3));
-% synthConfig.link(nn).thetas  = [0;0];
-% synthConfig.link(nn).alphas  = [pi/2;0];
-% synthConfig.link(nn).disps   = [0;0];
-% synthConfig.link(nn).offsets = [0;met4_len];
-% synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-% nn = nn+1;
-% %----------------------------------Digit 5 Metacarpal CF Defn---------------------------------------
-% met5_len   = norm(synthConfig.link(6).BFvecs(:,2));
-% synthConfig.link(nn).thetas  = [0;0];
-% synthConfig.link(nn).alphas  = [pi/2;0];
-% synthConfig.link(nn).disps   = [0;0];
-% synthConfig.link(nn).offsets = [0;met5_len];
-% synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-% nn = nn+1;
 
 %----------------------------------Wrist CF Defn---------------------------------------
 %rad_len = 70;
@@ -277,5 +229,22 @@ synthConfig.link(nn).disps   = [0;0];
 synthConfig.link(nn).offsets = [0;met5_len];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 nn = nn+1;
-
-
+fprintf('------------------- DH  Table ---------------------\n')
+fprintf('---------------------------------------------------\n')
+fprintf(' DOF # \t Link Name \t  theta \t d \t a \t alpha \n')
+fprintf('---------------------------------------------------\n')
+ndof = 0;
+for ll = 1:length(synthConfig.link)
+    for dd = 1:length(synthConfig.link(ll).thetas)
+        ndof = ndof+1;
+        fprintf(' %d \t\t %s',ndof, synthConfig.link(ll).nnames)
+        if length(synthConfig.link(ll).nnames)<3
+            fprintf('\t\t %d \t\t\t %d \t\t %d \t\t %d \n', synthConfig.link(ll).thetas(dd),synthConfig.link(ll).disps(dd),synthConfig.link(ll).offsets(dd),synthConfig.link(ll).alphas(dd))
+        elseif length(synthConfig.link(ll).nnames)<6
+            fprintf('\t %d \t\t\t %d \t\t %d \t\t %d \n', synthConfig.link(ll).thetas(dd),synthConfig.link(ll).disps(dd),synthConfig.link(ll).offsets(dd),synthConfig.link(ll).alphas(dd))
+        else
+            fprintf('  %d \t\t\t %d \t\t %d \t\t %d \n', synthConfig.link(ll).thetas(dd),synthConfig.link(ll).disps(dd),synthConfig.link(ll).offsets(dd),synthConfig.link(ll).alphas(dd))
+        end
+    end
+end
+fprintf('---------------------------------------------------\n')
