@@ -26,6 +26,10 @@ function varargout = MotionStudy(varargin)
 
 % Begin initialization code - DO NOT EDIT
 addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
+addpath(['.',filesep,'MotionEst',filesep,'Init'],...
+        ['.',filesep,'MotionEst',filesep,'Models'],...
+        ['.',filesep,'MotionEst',filesep,'Stereo'],...
+        ['.',filesep,'MotionEst',filesep,'TrajEst'])
 
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -34,6 +38,7 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_OutputFcn',  @MotionStudy_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
+               
 if nargin && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -249,7 +254,7 @@ for cc = handles.options.cams
     end
     images = dir([handles.options.path,filesep,'Cam', num2str(cc), filesep, '*.png']);
     for ii = 1:length(images)-1
-        if ~isnan(handles.Cam(cc).b_box(ii,:)) & ~handles.Cam(cc).b_box(ii,:)==0
+        if ~isnan(handles.Cam(cc).b_box(ii,:)) && ~handles.Cam(cc).b_box(ii,:)==0
         %get previously computed region of interest
         xc = handles.Cam(cc).b_box(ii,1);
         yc = handles.Cam(cc).b_box(ii,2);
@@ -619,6 +624,8 @@ function traject_est_Callback(hObject, eventdata, handles)
 % hObject    handle to traject_est (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+traj_estimation
 
 
 % --------------------------------------------------------------------
