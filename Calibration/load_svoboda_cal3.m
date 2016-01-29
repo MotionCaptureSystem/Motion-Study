@@ -2,7 +2,11 @@ function [options, camstruct] = load_svoboda_cal3(camstruct, options)
 %determine the cameras to be imported
 [options.ext_cal_file,options.ext_cal_path]  = uigetfile;
 load([options.ext_cal_path,options.ext_cal_file],'C','R','cam');
-cams = input(sprintf('Which cams would you like to import extrinsic parameters for [%d]?',[cam.camId]));
+fprintf('Extrinsic Parameters are Available for the Following Cameras:\n')
+for cc = 1:length(cam)
+    fprintf('%d\t',cam(cc).camId);
+end
+cams = input('\n Which cams would you like to import extrinsic parameters for?:');
 %determine the points to be estimated
 
 %default_dir = pwd;

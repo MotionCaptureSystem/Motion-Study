@@ -22,9 +22,11 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 04-Jan-2016 23:32:54
+% Last Modified by GUIDE v2.5 25-Jan-2016 12:10:34
 
 % Begin initialization code - DO NOT EDIT
+addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
+
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
@@ -55,15 +57,19 @@ function MotionStudy_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for MotionStudy
 handles.output = hObject;
 
+%initialize empty structure values
 handles.Cam(1).feat = {[]};
 handles.Cam(1).start_frame = [];
 handles.Cam(1).end_frame = [];
 handles.Cam(1).H = [];
 handles.Cam(1).K = [];
 handles.Cam(1).kc = [];
+handles.Cam(1).b_box = [];
 
 %store the working directory.
 handles.options.working = pwd;
+
+%add subdirectories
 
 %store defualt data directory 
 handles.options.path = ['C:',filesep];
@@ -84,19 +90,20 @@ function varargout = MotionStudy_OutputFcn(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Get default command line output from handles structure
+rmpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
 varargout{1} = handles.output;
 
 
 % --------------------------------------------------------------------
-function file_Callback(hObject, eventdata, handles)
-% hObject    handle to file (see GCBO)
+function file_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to file_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 test = 5;
 
 % --------------------------------------------------------------------
 function tracking_Callback(hObject, eventdata, handles)
-% hObject    handle to file (see GCBO)
+% hObject    handle to file_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -109,29 +116,29 @@ function status_report_Callback(hObject, eventdata, handles)
 
 
 % --------------------------------------------------------------------
-function im_proc_Callback(hObject, eventdata, handles)
-% hObject    handle to im_proc (see GCBO)
+function im_proc_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to im_proc_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
 % --------------------------------------------------------------------
-function feat_ident_Callback(hObject, eventdata, handles)
-% hObject    handle to feat_ident (see GCBO)
+function feat_ident_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to feat_ident_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
 % --------------------------------------------------------------------
-function calibration_Callback(hObject, eventdata, handles)
-% hObject    handle to calibration (see GCBO)
+function calibration_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to calibration_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 
 % --------------------------------------------------------------------
-function traj_est_Callback(hObject, eventdata, handles)
-% hObject    handle to traj_est (see GCBO)
+function motion_est_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to motion_est_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -148,6 +155,47 @@ function delace_im_Callback(hObject, eventdata, handles)
 % hObject    handle to delace_im (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+cam_fold = dir([handles.options.path,filesep,'Cam*.',filesep]);
+
+cams = zeros(1,length(cam_fold));
+
+fprintf('The following cams are available for delacing:\n')
+for cc = 1:length(cam_fold)
+    cams(cc) = str2double(cam_fold(cc).name(4:6));
+    fprintf('%d, ',cams(cc))
+%     if round(cc/5) ~= cc/5
+%         fprintf('\n')
+%     end
+end
+fprintf('\b\b\n')
+cams2delace = input('Which Cams would you like to delace?:');
+
+for cc = 1:length(cams2delace)
+    fprintf('Delacing Camera %d Video...\n',cams2delace(cc))
+    cam_num = num2str(cams2delace(cc));
+    while length(cam_num)<3
+        cam_num = ['0',cam_num];
+    end
+    vid_slice([handles.options.path,filesep,'Cam',cam_num],['cam',cam_num,'.MP4'],'png')
+end
+
+function vid_slice(dirname,filename, im_type)
+%VID_SLICE          -Slices the video in FILENAME into individual images of
+% filetype TYPE.
+
+Video = VideoReader([dirname,filesep,filename]);%Read the video file
+nframe = Video.NumberOfFrames;                  %Determine the number of frames
+kk = 0;
+
+for ii = 1:nframe-1
+    kk = kk+1;
+    frame=read(Video,ii);                       %read the frame
+    name=strcat(dirname,filesep,num2str(kk),'.', im_type);
+    while length(name)<7
+        name = strcat('0',name);
+    end
+    imwrite(frame,name);
+end
 
 
 % --------------------------------------------------------------------
@@ -188,6 +236,9 @@ function surf_ident_Callback(hObject, eventdata, handles)
 h = fspecial('gaussian',[7,7]);
 scale = 6;
 for cc = handles.options.cams
+    if ~isfield(handles.Cam(cc), 'features')
+        handles.Cam(cc).features = []; 
+    end
     if ~isempty(handles.Cam(cc).features)
         y = input(sprintf('Features for Camera %d have already been computed.  Do you want to recompute [Y or N]?',cc),'s');
         if strcmpi(y,'Y')
@@ -230,7 +281,7 @@ for cc = handles.options.cams
         hold on
         plot(handles.Cam(cc).features{ii}.Location(:,1), handles.Cam(cc).features{ii}.Location(:,2),'+r')
         hold off
-        pause
+        %pause
         guidata(hObject, handles);
         end
     end
@@ -295,7 +346,7 @@ function extrinsic_svoboda_Callback(hObject, eventdata, handles)
 % hObject    handle to extrinsic_svoboda (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-%%import all available calibration parameters
+%%import all available calibration_menu parameters
 [handles.options, handles.Cam] = load_svoboda_cal3(handles.Cam, handles.options);
 guidata(hObject,handles);
 
@@ -384,9 +435,8 @@ end
 if isempty(cams);
     fprintf('No images found in this project.  Delace images before proceeeding.\n')
 else
-    fprintf('Cam numbers '); 
-    for cc = 1:length(cams)-1; fprintf('%i, ',cams(cc)); end; fprintf('and %i ',cams(cc+1));
-    fprintf('have been delaced.\n');
+    fprintf('The following cameras have delaced images: \n'); 
+    for cc = cams; fprintf('%i\t',cc); end; fprintf('\n');
     user_spec = input('Which cams would you like to use? Enter = all:');
     if isempty(user_spec)
         handles.options.cams = cams;
@@ -443,10 +493,9 @@ function audio_sync_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% determine the sync delay by reading the audio track of the video file_menu.
 [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
-%handles.Cam(309).sync_del = 3.75/119.8;
-%handles.Cam(310).sync_del = 0.8/119.8;
-%handles.Cam(318).sync_del = 1/119.8;
+% perform subframe synchronization of cameras (linear interp)
 [handles.Cam] = subframe_sync(handles.Cam);
 guidata(hObject,handles);
 
@@ -490,7 +539,7 @@ function rectify_Callback(hObject, eventdata, handles)
 % hObject    handle to rectify (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-cams = input('In cams to rectify points?:');
+cams = input('In whcih cams should points be rectified?:');
 %timesteps = handles.:tstop;
 
 for c = cams
@@ -549,3 +598,45 @@ for cc = 1:length(handles.Cam)
     end
 end
 guidata(hObject,handles)
+
+
+% --------------------------------------------------------------------
+function results_menu_Callback(hObject, eventdata, handles)
+% hObject    handle to results_menu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function plotting_Callback(hObject, eventdata, handles)
+% hObject    handle to plotting (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function traject_est_Callback(hObject, eventdata, handles)
+% hObject    handle to traject_est (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function est_states_plot_Callback(hObject, eventdata, handles)
+% hObject    handle to est_states_plot (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function reproj_plots_Callback(hObject, eventdata, handles)
+% hObject    handle to reproj_plots (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function reproj_error_plots_Callback(hObject, eventdata, handles)
+% hObject    handle to reproj_error_plots (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
