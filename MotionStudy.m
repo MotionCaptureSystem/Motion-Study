@@ -548,12 +548,14 @@ function rectify_Callback(hObject, eventdata, handles)
 % hObject    handle to rectify (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-cams = input('In whcih cams should points be rectified?:');
+cams = input('In which cams should points be rectified?:');
 %timesteps = handles.:tstop;
 
 for c = cams
+    fprintf('Rectifying Points from Camera %d ... \n',c)
     pt = 0;
-    load([handles.options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(c),filesep,'int_cam',num2str(c),'.mat'], 'KK','kc','alpha_c','fc','cc');
+    %load([handles.options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(c),filesep,'int_cam',num2str(c),'.mat'], 'KK','kc','alpha_c','fc','cc');
+   
     handles.Cam(c).pts_rect = NaN*zeros(size(handles.Cam(c).pts));
     pts = 1:size(handles.Cam(c).pts,3);
     for pp = pts
@@ -561,7 +563,8 @@ for c = cams
         for kk = 1:size(handles.Cam(c).pts,2)
             %if the point is occluded the value will be NaN
             point = handles.Cam(c).pts(:,kk,pp);
-            point_ud = rm_distortion(point, KK, fc, cc, alpha_c, kc);
+            point_ud = rm_distortion(point, handles.Cam(c).K, handles.Cam(c).fc,...
+                       handles.Cam(c).cc, handles.Cam(c).alpha_c, handles.Cam(c).kc);
             handles.Cam(c).pts_rect(:,kk,pts(pt)) = point_ud;
         end
     end
