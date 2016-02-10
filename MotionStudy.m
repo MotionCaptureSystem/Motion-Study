@@ -262,9 +262,6 @@ for cc = handles.options.cams
         yw = handles.Cam(cc).b_box(ii,4);
         %read the image
         img = imread( [handles.options.path,filesep,'Cam', num2str(cc), filesep, images(ii).name]);
-%        gray = rgb2gray(img);
-%        filtered = imfilter(gray,h);
-%        gray = histeq(filtered);
         %contrast adjust the image
         imgFilt=imadjust(img(yc:yc+yw,xc:xc+xw,:),[0 0 0; 0.1 0.1 0.1],[]);
         %convert the color image to grayscale
@@ -383,6 +380,17 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
     if strcmp(l,'y') %If the user specifies yes, load the data
         load([handles.options.path,filesep,'CamStruct.mat'])
         handles.Cam = Cam; %all data is contained in the Cam Structure
+        
+        %if trajectory estimation has been performed, load that too
+        if exist([handles.options.path,filesep,'EstStruct.mat'],'file')
+            load([handles.options.path,filesep,'EstStruct.mat'])
+        end
+        
+        %if there is stereo triangluation data saved, load that too
+        if exist([handles.options.path,filesep,'StereoStruct.mat'],'file')
+            load([handles.options.path,filesep,'StereoStruct.mat'])
+        end
+               
         for cc = 1:length(handles.Cam) %for each camera, load the data
             if isempty(handles.Cam(cc).start_frame) 
             	continue;  %if start_frame is an empty matrix there was no data imported for that camera
