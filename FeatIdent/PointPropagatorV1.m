@@ -66,7 +66,7 @@ end
 %store working directory
 handles.working = pwd;
 %import handles from MotionStudy GUI
-
+handles.bbox_delta = 10;
 handles.options = MStudyHandles.options;
 
 %store defualt data directory 
@@ -465,8 +465,8 @@ point_num = str2double(get(handles.current_point_label,'String'));
 [~, nsteps, npts] = size(handles.Cam(cam).pts);
 %if the zoom feature is being used, compute the appropriate offset
 if handles.Cam(cam).zoom
-        x = handles.Cam(cam).b_box(timestep,1)-1;
-        y = handles.Cam(cam).b_box(timestep,2)-1;
+        x = handles.Cam(cam).b_box(timestep,1)-1-handles.bbox_delta;
+        y = handles.Cam(cam).b_box(timestep,2)-1-handles.bbox_delta;
 else %otherwise, the offset is nothing
     x = 0;
     y = 0;
@@ -524,8 +524,8 @@ if any(any(any(~isnan(handles.Cam(cam).pts))))
     end
 
     if handles.Cam(cam).zoom
-        x = handles.Cam(cam).b_box(timestep,1)-1;
-        y = handles.Cam(cam).b_box(timestep,2)-1;
+        x = handles.Cam(cam).b_box(timestep,1)-1-handles.bbox_delta;
+        y = handles.Cam(cam).b_box(timestep,2)-1-handles.bbox_delta;
         plot(handles.current_image, reshape(handles.Cam(cam).pts(1,timestep,:)-x,1,[]), reshape(handles.Cam(cam).pts(2,timestep,:)-y,1,[]),'ro');
         for pp = 1:npts
             if ~isnan(handles.Cam(cam).pts(:,timestep,pp))
@@ -559,7 +559,7 @@ cam = str2double(get(handles.current_cam,'String'));
 tstep = round(get(handles.time_slider,'Value'))-handles.Cam(cam).start_frame+1;
 
 if isfield(handles.Cam(cam),'b_box')
-    b_box = handles.Cam(cam).b_box(tstep,:);
+    b_box = handles.Cam(cam).b_box(tstep,:)+[-handles.bbox_delta, -handles.bbox_delta, 2*handles.bbox_delta, 2*handles.bbox_delta];
     h = imshow(handles.Cam(cam).frames(b_box(2):b_box(2)+b_box(4),b_box(1):b_box(1)+b_box(3),tstep),'Parent',handles.current_image);
     handles.Cam(cam).zoom = 1;
 else

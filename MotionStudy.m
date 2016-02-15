@@ -22,7 +22,7 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 25-Jan-2016 12:10:34
+% Last Modified by GUIDE v2.5 15-Feb-2016 11:33:30
 
 % Begin initialization code - DO NOT EDIT
 addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
@@ -596,11 +596,11 @@ for cam = cams
         plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','+r');
         plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','-b');
         %plot the undistorted features
-        plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','og');
-        plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','-k');    
-        %plot the synchronized featured
-        plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','^b');
-        plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','-m');  
+%         plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','og');
+%         plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','-k');    
+%         %plot the synchronized featured
+%         plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','^b');
+%         plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','-m');  
     end
     title(['Camera ',num2str(cam)]);
 end
@@ -677,3 +677,122 @@ function reproj_error_plots_Callback(hObject, eventdata, handles)
 % hObject    handle to reproj_error_plots (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function merge_proj_Callback(hObject, eventdata, handles)
+% hObject    handle to merge_proj (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+%prompt the user to select which file should be merged.
+[filename, pathname, ~] = uigetfile('*.mat');
+import_struct = load([pathname,filename]);
+
+%determine the number of cameras in the current project
+Cam = handles.Cam;
+ncam = length(Cam);
+
+fields_orig = fieldnames(Cam); 
+%%IMPORT MISSING FIELDS OF DATA
+%for each camera in the current project, determine if there are missing
+%data that exist in the project being imported.
+fprintf('Finding data in the imported structure which is not contained in this project...\n')
+for c = 1:ncam
+    %determine which fields in this project are empty
+    orig_fields = structfun(@isempty, Cam(c));
+    %determine which fields in the imported structure are full
+    import_fields = ~structfun(@isempty, import_struct.Cam(c));
+    for ff = 1:length(fields_orig);
+        if iscell(Cam(c).(fields_orig{ff}))
+            if isempty(Cam(c).(fields_orig{ff}){1})
+                orig_fields(ff) = 0;
+            end
+        end
+    end
+    for ff = 1:length(fields_orig);
+        if iscell(Cam(c).(fields_orig{ff}))
+            if isempty(Cam(c).(fields_orig{ff}){1})
+                import_fields(ff) = 0;
+            end
+        end
+    end
+    %determine where the imported project has data and the current project
+    %doesn't
+    overlap = orig_fields & import_fields;
+    %for each field in the list, import what is missing in the current
+    %structure.
+    for ff = 1:length(fields_orig);
+        if overlap(ff)
+           Cam(c).(fields_orig{ff}) = import_struct.Cam(c).(fields_orig{ff});
+        end
+    end   
+end
+
+%%IMPORT MISSING POINTS
+for c = 1:ncam
+    import_fields = ~structfun(@isempty, import_struct.Cam(c));
+    for ff = 1:length(fields_orig);
+        if iscell(Cam(c).(fields_orig{ff}))
+            if isempty(Cam(c).(fields_orig{ff}){1})
+                import_fields(ff) = 0;
+            end
+        end
+    end
+    if sum(import_fields)==0
+       continue 
+    end
+    fprintf('Merging point data from camera %d...\n',c)
+    %determine difference in start frames
+    dt = Cam(c).start_frame - import_struct.Cam(c).start_frame;
+    fprintf('Start frame difference: %d.\n',dt)
+    if dt > 0  %if difference is negative, pad the original point matrix
+        Cam(c).pts = [NaN*zeros(2,abs(dt),size(Cam(c).pts,3)),Cam(c).pts];
+        Cam(c).start_frame = import_struct.Cam(c).start_frame;
+    elseif dt < 0 %if the difference is positive, pad the imported point matrix
+        import_struct.Cam(c).pts = [NaN*zeros(2,dt,size(import_struct.Cam(c).pts,3)),import_struct.Cam(c).pts];
+        import_struct.Cam(c).start_frame = Cam(c).start_frame;
+    end
+    
+    %determine if the matricies of point data are the same length
+    l_orig = size(Cam(c).pts,2);
+    l_import = size(import_struct.Cam(c).pts,2);
+    dl = l_orig - l_import;
+    fprintf('Matrix length difference: %d.\n',dl)
+    if dl<0 %if difference is negative, pad the original point matrix
+        Cam(c).pts = [Cam(c).pts, NaN*zeros(2,abs(dl),size(Cam(c).pts,3))];
+    elseif dl>0 %if the difference is positive, pad the imported point matrix
+        import_struct.Cam(c).pts = [import_struct.Cam(c).pts, NaN*zeros(2,dl,size(import_struct.Cam(c).pts,3))];
+    end
+    
+    %determine if the matricies of point data contain the same number of points
+    npts_orig   = size(Cam(c).pts,3);
+    npts_import = size(import_struct.Cam(c).pts,3);
+    dp = npts_orig - npts_import;
+    fprintf('Point number difference: %d.\n',dp)
+    if dp <0 %if difference is negative, pad the original point matrix
+        Cam(c).pts(:,:,npts_orig+1:npts_orig+abs(dp)) = NaN*zeros(2,size(Cam(c).pts,2),abs(dp));
+    elseif dp>0 %if the difference is positive, pad the imported point matrix
+        import_struct.Cam(c).pts(:,:,npts_orig+1:npts_orig+abs(dp)) = NaN*zeros(2,import_struct.size(Cam(c).pts,2),abs(dp));
+    end
+    
+    %determine which points were not picked in the original project
+    not_exist_pts_orig = isnan(Cam(c).pts);
+    %determine which points were picked in the imported data set
+    exist_pts_import = ~isnan(import_struct.Cam(c).pts);
+    %determine the overlap in points
+    overlap_pts = not_exist_pts_orig & exist_pts_import;
+    if any(any(any(overlap_pts)))
+        fprintf('Points exist in imported project which do not exist in current project.\n')
+        fprintf('Importing points .... \n')
+    end
+    %copy the points from the imported dataset to the current dataset
+    Cam(c).pts(overlap_pts) = import_struct.Cam(c).pts(overlap_pts);
+    
+end
+
+handles.Cam = Cam;
+guidata(hObject, handles)
+
+
+
