@@ -14,12 +14,7 @@ for gg = 1:g_max
     end
 end
 
-cams = [];
-for cc = 1:length(camstruct)
-   if ~isempty(camstruct(cc).H)
-       cams = [cams, cc];
-   end
-end
+cams = options.est.cams;
 
 ncam = length(cams);
 nmeas = ncam*length([link(links).MeasInds]);

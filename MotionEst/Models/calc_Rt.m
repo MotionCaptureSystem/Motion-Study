@@ -37,5 +37,5 @@ uncertainty_radius = sqrt(flapdist_per_frame^2 + flydist_per_frame^2);
 uncertainty_ratio = .95;
 % variance = (uncertainty_radius^2)/chi2inv(uncertainty_ratio,3);
 variance = (uncertainty_radius^2)/7.8147;
-Rt = variance*eye(3);
+Rt = 0.04*eye(3);
 %Rt = eye(size(Rt));

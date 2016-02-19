@@ -1,5 +1,4 @@
-%clear all
-%close all
+function [camstruct,options] = Init_Flight_BatFlight_20150724_test004_wrist(camstruct,options)
 %% --------------------------Set Options----------------------------------
 %Import Options
 options.groups          = [1,2,3];
@@ -8,13 +7,14 @@ options.dof_names        = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\t
 options.tstart          = 390;                  %Note: due to sync delay the first 
 options.tstop           = 425;                  %Useable timestep will be tstart+1 
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
-options.est.cams        = [301,302,303,310,312,318,320,325,333];
+
 options.plotflag        = 0;
 options.path            = 'D:\ShandongData2015\Batflight_07242015\Test004';
 options.default_dir     = pwd;
 options.fs              = 120;
 
 %Trajectory Estimation Options
+options.est.cams        = [301,302,303,310,312,318,320,325,333];
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
@@ -28,7 +28,7 @@ options.est.state_init      = [-1.093,-0.2433,-0.2678,90*pi/180,-100*pi/180,180*
 
 %Plot Options
 options.plot.pts           = [1,2,3,4,6,7,11,12,14,15,17];
-options.plot.pts_orig      = [4,1,5,6,8,7,10 ,9,14,13,17];
+options.plot.pts_orig      = [4,1,5,6,8,7,10,9,14,13,17];
 options.plot.reprojframe   = 405;
 options.plot.tstart        = 6;
 options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
@@ -50,28 +50,35 @@ options.link = synthConfig.link(links);
 options      = create_state_vec(options);
 options      = create_meas_vec(options);
 
-%% Load The Camera Measurements
-camstruct = camstruct(options.est.cams);
-ncam = length(camstruct);
-
-for cc = 1:ncam
-    dt = camstruct(cc).start_frame-1+floor(options.fs*camstruct(cc).sync_del);
-    camstruct(cc).pts = [];
-    camstruct(cc).pts(:,:,1)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),4);
-    camstruct(cc).pts(:,:,2)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),1);
-    camstruct(cc).pts(:,:,3)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),5);
-
-    camstruct(cc).pts(:,:,4:5)   = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[6:-1:5]);
-    camstruct(cc).pts(:,:,6:8)   = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[8:-1:6]);
-    camstruct(cc).pts(:,:,9)     = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),8);
-    camstruct(cc).pts(:,:,10)    = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),8);
-
-    camstruct(cc).pts(:,:,11:13) = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[10:-1:8]);
-    camstruct(cc).pts(:,:,14:16) = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[14,13,8]);
-    camstruct(cc).pts(:,:,17:18) = camstruct(cc).pts_sync(:,options.tstart-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88):options.tstop-camstruct(cc).start_frame+1+floor(camstruct(cc).sync_del*119.88),[17,8]);
-    camstruct(cc).pt_assoc       = [1,1,1,2,2,3,3,3,4,4,5,5,5,6,6,6,7,7;
-                                    1,2,3,1,2,1,2,3,1,2,1,2,3,1,2,3,1,2];
+%% Set the point associations and create a matrix of camera measurements
+for cc = options.est.cams
+    camstruct(cc).pt_assoc = {[4,1,5],[6,5],[8,7,6],[8,8],[10,9,8],[14,13,8],[17,8]};
 end
+options.est.meas = create_meas_matrix(camstruct, options);
+
+%% Filter - EKF
+%State matrix with all points
+options.est.x_km1 = options.est.state_init;
+
+%Covariance Matrix for each point
+link_list = get_group_links(options.link, options.est.groups);
+options.est.Sigma_k = calc_Rt_joint(link_list, options.link);
+
+% Motion model: Just kinematic point-mass model.  xn = x + u*delta_t;
+options.est.state_update_model = @(x_km1, x_km2, links, Rt_handle) mm_ConstVel(x_km1, x_km2, options, links, Rt_handle);
+options.est.Rt_handle          = @(ll)        calc_Rt_joint(ll,options.link);
+
+% Measurement model: Each measurment is a col-vector of length 3*n where n
+%   is the number of fixed markers on the bat body.  Assume exact knowledge
+%   of the marker positions in body-frame (comes from param.mkr) and exact
+%   orientation of the body in 3D space (comes from the upper-left of the H
+%   matrix at every timestep)
+options.est.msmt_model = @(x, t) CamNet_JS(x, camstruct, options);
+
+
+
+
+
 
 
 

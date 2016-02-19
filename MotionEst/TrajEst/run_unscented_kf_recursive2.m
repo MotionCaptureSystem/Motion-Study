@@ -36,11 +36,18 @@ function [X, Sig_X, varargout] = run_unscented_kf_recursive2(...
 %
 %    outstruct.mu_bar = [nxT] matrix of motion-model state estimates
 %    outstruct.Sig_bar = [nxnxT] matrix of motion-model state covariances 
-link= options.link;
-links = get_group_links(link,options.groups);
-nstate = sum([link(links).nDof]);
-nmeas = 2*size([link(links).BFvecs],2);
-ncam = size(z,1)/length([link.MeasInds]);
+
+if strcmp(options.est.type,'joint')
+    link= options.link;
+    links = get_group_links(link,options.groups);
+    nstate = sum([link(links).nDof]);
+    nmeas = 2*size([link(links).BFvecs],2);
+    ncam = size(z,1)/length(nmeas);
+elseif strcmp(options.est.type,'point')
+    nstate = 3*length(options.pts);
+    ncam   = length(options.cams);
+    nmeas  = 2*length(options.pts);
+end
 
 if nargin < 9
     param = struct();
@@ -81,15 +88,31 @@ for ii = 3:size(z,2) % for all timesteps
     
     for gg = options.groups
         for ss = 1:niter
-        links = get_group_links(link,gg);
-        npts_l = size([link(links).BFvecs],2);
-        n   = sum([link(links).nDof]);
+            %added this if construct to determine what type of estimation
+            %is done.  If joint estimation, then link attributes are
+            %needed, otherwise all points are estimated with no
+            %connectivity assumed.
+            if strcmp(options.est.type, 'joint')
+                links = get_group_links(link,gg);
+                npts_l = size([link(links).BFvecs],2);
+                n   = sum([link(links).nDof]);
+                state_inds = [link(links).StateInds];
+                meas_inds = [link(links).MeasInds];
+                links_prev = get_group_links(link,1:gg-1);
+                state_inds_prev = [link(links_prev).StateInds];
+            elseif strcmp(options.est.type, 'point')
+                npts_l = length(options.pts);
+                n = 3*npts_l;
+                state_inds = 1:n;
+                meas_inds = 1:2*npts_l;
+                state_inds_prev = [];
+            end
         if ss>1
-            mu  = X([link(links).StateInds],ii);
+            mu  = X(state_inds,ii);
         else
-            mu  = X([link(links).StateInds],ii-1);
+            mu  = X(state_inds,ii-1);
         end
-        Sig = Sig_X([link(links).StateInds],[link(links).StateInds],ii-1);
+        Sig = Sig_X(state_inds,state_inds,ii-1);
         
         % build w col-vectors (weights of sigma points)
         wm = [];
@@ -104,13 +127,20 @@ for ii = 3:size(z,2) % for all timesteps
         % Line 3: Form Chi_star via motion model on sig points
         Chi_star = zeros(size(Chi_prev));
         for sigpt = 1:size(Chi_star, 2)
-            %[Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), u(:,ii), ii, Rt_handle);
-            [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X([link(links).StateInds],ii-2), links, Rt_handle);
+            if strcmp(options.est.type, 'point')
+                [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), Rt_handle);
+            elseif strcmp(options.est.type, 'joint')
+                [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), links, Rt_handle);
+            end
         end
 
         % Line 4&5: Form mu_bar and Sig_bar from weighted sum of Chi_star
         mu_bar = Chi_star * wm';
-        [~, Rt] = g_handle(mu_bar, X([link(links).StateInds], ii-2), links, Rt_handle);
+        if strcmp(options.est.type, 'point')
+            [~, Rt] = g_handle(mu_bar, Rt_handle);
+        elseif strcmp(options.est.type, 'joint')
+            [~, Rt] = g_handle(mu_bar, X(state_inds, ii-2), links, Rt_handle);
+        end
         del_Sig = (Chi_star - repmat(mu_bar,1,size(Chi_star,2)));
         Sig_bar = zeros(size(Sig));
         for ndx = 1:size(del_Sig,2)
@@ -124,25 +154,25 @@ for ii = 3:size(z,2) % for all timesteps
         % Detect & handle occlusions
         z_gg = zeros(2*npts_l*ncam,1);
         for cc = 1:ncam
-            z_gg(2*npts_l*(cc-1)+(1:length([link(links).MeasInds])),1) = z(length([link.MeasInds])*(cc-1)+[link(links).MeasInds],ii);
+            z_gg(2*npts_l*(cc-1)+(1:length(meas_inds)),1) = z(nmeas*(cc-1)+meas_inds,ii);
         end
         occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
         z_minus_occlusions = z_gg; % create local msmt copy
         z_minus_occlusions(occlusion_ndx) = []; % strip occlusions out
 
         % Line 7: Z_bar from msmt model on sig points
-        %Z_bar = zeros(length([link(links).MeasInds]), size(Chi_bar,2));
-        links_prev = get_group_links(link,1:gg-1);
+        %Z_bar = zeros(length(meas_inds), size(Chi_bar,2));
+        
         Z_bar = zeros(size(z_gg,1),size(Chi_bar,2));
         for sigpt = 1:size(Chi_bar, 2)
-            [Z_bar(:,sigpt), ~] = h_handle([X([link(links_prev).StateInds],ii);Chi_bar(:,sigpt)], ii);
+            [Z_bar(:,sigpt), ~] = h_handle([X(state_inds_prev,ii);Chi_bar(:,sigpt)], ii);
         end
         Z_bar(occlusion_ndx,:) = []; % strip out occluded measurments
 
         % Line 8--10: z_hat (mean msmt) and S (msmt cov) from weighted sum
         % of Z_bar, Sig_xz from "del terms"
         z_hat = Z_bar * wm';
-        [~, Qt] = h_handle([X([link(links_prev).StateInds],ii);mu_bar], ii);
+        [~, Qt] = h_handle([X(state_inds_prev,ii);mu_bar], ii);
         del_Z = (Z_bar - repmat(z_hat,1,size(Z_bar,2)));
         del_Sig = Chi_bar - repmat(mu_bar,1,size(Chi_bar,2));
         S = zeros(length(z_hat), length(z_hat));
@@ -164,12 +194,12 @@ for ii = 3:size(z,2) % for all timesteps
         Sig = Sig_bar - K*S*K';
 
         % Accumulate measurements into function outputs
-        X([link(links).StateInds],ii) = mu;
-        Sig_X([link(links).StateInds],[link(links).StateInds],ii) = Sig;
+        X(state_inds,ii) = mu;
+        Sig_X(state_inds,state_inds,ii) = Sig;
         % norm_Q_log(ii) = max(max(Qt));
 
-        outstruct.mu_bar([link(links).StateInds],ii) = mu_bar;
-        outstruct.Sig_bar([link(links).StateInds],[link(links).StateInds],ii) = Sig_bar;
+        outstruct.mu_bar(state_inds,ii) = mu_bar;
+        outstruct.Sig_bar(state_inds,state_inds,ii) = Sig_bar;
         end
     end
 end

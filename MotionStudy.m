@@ -22,7 +22,7 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 15-Feb-2016 11:33:30
+% Last Modified by GUIDE v2.5 17-Feb-2016 11:52:15
 
 % Begin initialization code - DO NOT EDIT
 addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
@@ -77,7 +77,7 @@ handles.options.working = pwd;
 %add subdirectories
 
 %store defualt data directory 
-handles.options.path = ['C:',filesep];
+handles.options.path = ['.',filesep];
 handles.options.cams = [];
 
 % Update handles structure
@@ -381,17 +381,27 @@ handles.options.path = uigetdir(handles.options.path);
 if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a data file, should it be loaded?
     l = input('A previous data file exists. Do you want to load it? [y/n]','s');
     if strcmp(l,'y') %If the user specifies yes, load the data
+        fprintf('Loading CamStruct.mat ... \n')
         load([handles.options.path,filesep,'CamStruct.mat'])
         handles.Cam = Cam; %all data is contained in the Cam Structure
         
         %if trajectory estimation has been performed, load that too
         if exist([handles.options.path,filesep,'EstStruct.mat'],'file')
+            fprintf('Loading EstStruct.mat ... \n')
             load([handles.options.path,filesep,'EstStruct.mat'])
+            handles.EstStruct = EstStruct;
+%             if isfield(handles.EstStruct, 'kinc')
+%                 handles.options.est.type = 'joint';
+%             else
+%                 handles.options.est.type = 'point';
+%             end
         end
         
         %if there is stereo triangluation data saved, load that too
         if exist([handles.options.path,filesep,'StereoStruct.mat'],'file')
+            fprintf('Loading StereoStruct.mat ... \n')
             load([handles.options.path,filesep,'StereoStruct.mat'])
+            handles.Stereo = Stereo;
         end
                
         for cc = 1:length(handles.Cam) %for each camera, load the data
@@ -662,29 +672,17 @@ function traject_est_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[handles.EstStruct, options] = traj_estimation(handles.Cam, handles.options);
-
-handles.options.link        = options.link;
-handles.options.plot        = options.plot;
-handles.options.est         = options.est;
-handles.options.groups      = options.groups;
-handles.options.link_names  = options.link_names;
-handles.options.dof_names   = options.dof_names;
-handles.options.tstart      = options.tstart;
-handles.options.tstop       = options.tstop;
-handles.options.interp      = options.interp;
-handles.options.plotflag    = options.plotflag ;
-
-guidata(hObject, handles);
-
-
 % --------------------------------------------------------------------
 function est_states_plot_Callback(hObject, eventdata, handles)
 % hObject    handle to est_states_plot (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-Plot_Script_JS(handles.Cam, handles.EstStruct, handles.options)
 
+if strcmp(handles.options.est.type,'joint')
+    Plot_Script_JS(handles.Cam, handles.EstStruct, handles.options)
+elseif strcmp(handles.options.est.type,'point')
+    PlotScript(handles.Cam, handles.EstStruct, handles.options)
+end
 
 % --------------------------------------------------------------------
 function reproj_plots_Callback(hObject, eventdata, handles)
@@ -815,5 +813,47 @@ end
 handles.Cam = Cam;
 guidata(hObject, handles)
 
+% --------------------------------------------------------------------
+function est_options_Callback(hObject, eventdata, handles)
+% hObject    handle to est_options (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.options.est.type        = input('What type of state estimator would you like to initialize? [joint,point]:','s');
 
+% if strcmp(handles.options.est.type,'joint')
+    [init_file, init_path, ~]       = uigetfile(['.',filesep,'MotionEst',filesep,'Init'],'Choose your initialization file:');
+    [handles.Cam, handles.options]  = feval([init_file(1:end-2)], handles.Cam, handles.options);
+% elseif strcmp(handles.options.est.type,'point')
+%     
+%     
+% end
 
+guidata(hObject, handles);
+
+% --------------------------------------------------------------------
+function estimator_Callback(hObject, eventdata, handles)
+% hObject    handle to estimator (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[handles.EstStruct, options] = traj_estimation(handles.options);
+
+% handles.options.plot        = options.plot;
+% handles.options.est         = options.est;
+% handles.options.groups      = options.groups;
+% 
+% handles.options.tstart      = options.tstart;
+% handles.options.tstop       = options.tstop;
+% handles.options.interp      = options.interp;
+% handles.options.plotflag    = options.plotflag ;
+% 
+% if strcmp(options.est.type, 'joint')
+%     handles.options.link        = options.link;
+%     handles.options.groups      = options.groups;
+%     handles.options.link_names  = options.link_names;
+%     handles.options.dof_names   = options.dof_names;
+% elseif strcmp(options.est.type, 'point')
+%     
+% end
+
+guidata(hObject, handles);
