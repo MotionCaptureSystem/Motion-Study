@@ -4,7 +4,11 @@ function CFPlot(H,s)
 %should be entered in the base frame.  All CFs will plot in the base frame.
 
 dims = size(H);
-nframes = dims(3);
+if length(dims)<3
+    nframes = 1;
+else
+    nframes = dims(3);
+end
 axis = s*eye(3,3);
 points = zeros(6,3);
 origins = zeros(nframes,3);

@@ -22,7 +22,7 @@ function varargout = PointPropagatorV1(varargin)
 
 % Edit the above text to modify the response to help PointPropagatorV1
 
-% Last Modified by GUIDE v2.5 15-Jan-2016 10:29:28
+% Last Modified by GUIDE v2.5 26-Feb-2016 11:50:50
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -195,7 +195,7 @@ else %otherwise, just set to new value
     set(handles.end_frame, 'String', num2str(handles.Cam(current_cam).end_frame));
 end
 
-set(handles.rotate_image,'Value',handles.Cam(current_cam).rot_img);
+set(handles.project_epipolar,'Value',handles.Cam(current_cam).rot_img);
 guidata(hObject, handles);
 clear vidObj
 current_timestep_Callback(handles.current_timestep,eventdata,handles);
@@ -265,6 +265,10 @@ function current_point_label_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of current_point_label as text
 %        str2double(get(hObject,'String')) returns contents of current_point_label as a double
 
+if get(handles.project_epipolar,'Value')
+    project_epipolar(handles.project_epipolar,eventdata,handles);
+end
+
 % --- Executes during object creation, after setting all properties.
 function current_point_label_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to current_point_label (see GCBO)
@@ -287,6 +291,13 @@ function save_button_Callback(hObject, eventdata, handles)
 % end
 MStudyHandles.Cam = handles.Cam;
 setappdata(0,'MStudyHands', MStudyHandles);
+
+for cc = 1:length(handles.Cam)
+    handles.Cam(cc).frames = [];
+end
+fprintf('Saving data ... do not close MATLAB or MOTIONSTUDY ... \n')
+save([handles.options.path,filesep,'CamStruct.mat'], '-struct', 'handles','Cam', '-v7.3')
+fprintf('The session has been saved.\n')
 %varargout{1} = handles.Cam;
 %save([handles.data_dir,filesep,'CamStruct.mat'], '-struct', 'handles','Cam','-v7.3')
 
@@ -398,60 +409,60 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-% --- Executes on button press in rotate_image.
-function rotate_image_Callback(hObject, eventdata, handles)
-% hObject    handle to rotate_image (see GCBO)
+% --- Executes on button press in project_epipolar.
+function project_epipolar_Callback(hObject, eventdata, handles)
+% hObject    handle to project_epipolar (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% Hint: get(hObject,'Value') returns toggle state of rotate_image
-
+% Hint: get(hObject,'Value') returns toggle state of project_epipolar
+Cam = handles.Cam;
+cams = which_cams(Cam);
 current_cam = str2double(get(handles.current_cam,'String'));
-handles.Cam(current_cam).rot_img = get(hObject,'Value');
-[~,~,~,nframes] = size(handles.Cam(current_cam).frames);
-
-for ii = 1:nframes
-    handles.Cam(current_cam).frames(:,:,:,ii) = imrotate(handles.Cam(current_cam).frames(:,:,:,ii),180);
-    handles.Cam(current_cam).features{ii}.Locations = ([cos(pi),-sin(pi);sin(pi),cos(pi)]*handles.Cam(current_cam).features{ii}.Locations')';
+pt = str2double(get(handles.current_point_label,'String'));
+timestep = str2double(get(handles.current_timestep,'String'));
+proj_epi = get(hObject,'Value');
+set(handles.current_image,'NextPlot', 'Add');
+if proj_epi
+    for cc = cams
+        if cc == current_cam
+            continue;
+        end
+        t = timestep - floor(Cam(current_cam).sync_del*119.88)- Cam(cc).start_frame + 1 + floor(119.88*Cam(cc).sync_del)+1;
+        if ~isnan(Cam(cc).pts_rect(:,t,pt))
+            epi_line = epipolar_line(Cam(cc).H,Cam(current_cam).H,Cam(cc).K\[Cam(cc).pts_rect(:,t,pt);1]);
+            x = linspace(-1,1,100);
+            line = x*epi_line(1)+epi_line(2);
+            x_n = [x;line];
+            kc = Cam(current_cam).kc;
+            xd = [zeros(2,size(x_n,2));ones(1,size(x_n,2))];
+            for pp = 1:size(x_n,2)
+                pt_n = x_n(:,pp);
+                r = norm(pt_n);
+                xd(1:2,pp) = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*pt_n+[2*kc(3)*pt_n(1)*pt_n(2)+ kc(4)*(r^2+2*pt_n(1)^2);2*kc(4)*pt_n(1)*pt_n(2)+kc(3)*(r^2+2*pt_n(2)^2)];
+            end
+            pts = Cam(current_cam).K*xd;
+            b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:);
+            indx = isnan(pts) | repmat(pts(1,:)<b_box(1), 3, 1) | repmat(pts(1,:)>(b_box(1)+b_box(3)), 3, 1) ...
+                        | repmat(pts(2,:)<b_box(2), 3, 1) | repmat(pts(2,:)>(b_box(2)+b_box(4)), 3, 1);
+            indx = sum(indx)==0;
+            pts = pts(:,find(indx));
+            if ~isempty(pts)
+                h = plot(handles.current_image, pts(1,:)'-b_box(1),pts(2,:)'-b_box(2),'-c');
+                set(h, 'HitTest', 'off');
+                h = text(pts(1,1)'-b_box(1),pts(2,1)'-b_box(2),num2str(cc), 'color', 'c');
+                set(h, 'HitTest', 'off');
+            end
+        end
+    end
 end
-
-current_time = get(handles.time_slider,'Value');
-h = imshow(handles.Cam(current_cam).frames(:,:,:,current_time),'Parent',handles.current_image);
-handles.image_handle = h;
-%set(handles.image_handle, 'ButtonDownFcn', {@pick_points,handles});
-set(handles.image_handle, 'HitTest', 'off');
-guidata(hObject, handles);
 
 %--------------------------------------------------------------------------
 %                         My Processing Functions
 %--------------------------------------------------------------------------
-% function pick_points(hObject, eventdata, handles)
-% % hObject    handle to rotate_image (see GCBO)
-% % eventdata  reserved - to be defined in a future version of MATLAB
-% % handles    structure with handles and user data (see GUIDATA)
-% % PICK_POINTS specifies new points 
-% point = get(get(hObject, 'Parent'),'Currentpoint');
-% cam = str2double(get(handles.current_cam,'String'));
-% timestep = str2double(get(handles.current_timestep,'String'));
-% point_num = str2double(get(handles.current_point_label,'String'));
-% 
-% handles.Cam(cam).pts(:,timestep,point_num) = point(1,1:2)';
-% set(handles.current_image,'NextPlot', 'Add');
-% ax_child = get(handles.current_image,'Children');
-% child_types = get(ax_child,'Type');
-% cell_index = regexp('line',child_types);
-% 
-% if ~isempty(cell_index)
-%     index = find([cell_index{:}]);
-%     delete(ax_child(index));
-% end
-% 
-% plot(handles.current_image, reshape(handles.Cam(cam).pts(1,timestep,:),1,[]), reshape(handles.Cam(cam).pts(2,timestep,:),1,[]),'ro');
-% set(handles.current_image,'NextPlot', 'replacechildren');
-% guidata(hObject,handles);
 
 % --- Executes on mouse press over axes background.
 function current_image_ButtonDownFcn(hObject, eventdata, handles)
-% hObject    handle to rotate_image (see GCBO)
+% hObject    handle to project_epipolar (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % PICK_POINTS specifies new points 
@@ -560,6 +571,18 @@ tstep = round(get(handles.time_slider,'Value'))-handles.Cam(cam).start_frame+1;
 
 if isfield(handles.Cam(cam),'b_box')
     b_box = handles.Cam(cam).b_box(tstep,:)+[-handles.bbox_delta, -handles.bbox_delta, 2*handles.bbox_delta, 2*handles.bbox_delta];
+    if b_box(1)<0
+        b_box(1) = 0;
+    end
+    if b_box(2)<0
+        b_box(3) = 0;
+    end
+    if b_box(1)+b_box(3)>1280
+        b_box(2) = 1280-b_box(1);
+    end
+    if b_box(2)+b_box(4)>720
+        b_box(4) = 720-b_box(2);
+    end
     h = imshow(handles.Cam(cam).frames(b_box(2):b_box(2)+b_box(4),b_box(1):b_box(1)+b_box(3),tstep),'Parent',handles.current_image);
     handles.Cam(cam).zoom = 1;
 else
@@ -585,7 +608,7 @@ cam_list = [];
 %Run loop for length of Cam structure
 for cc = 1:ncams
     %If the camera has been imported, store the camera number
-    if ~isempty(Cams(cc).startframe)
+    if ~isempty(Cams(cc).start_frame)
         cam_list = [cam_list, cc];
     end
 end
