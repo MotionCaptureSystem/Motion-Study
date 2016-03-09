@@ -2,7 +2,7 @@ function plot_ret_plane_inert(H,phi)
 %PLOT_RET_PLANE_INERT   -plots the retinal plane of the camera and the
 %point phi in inertial cooridnates
 
-hold on
+
 CFPlot(H,0.2)
 
 ret_plane = H(1:3,1:4)*[-1,-1,1,1,-1;-1,1,1,-1,-1;1,1,1,1,1;1,1,1,1,1];

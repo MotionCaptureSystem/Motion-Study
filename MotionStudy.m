@@ -511,9 +511,19 @@ function audio_sync_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % determine the sync delay by reading the audio track of the video file_menu.
-[handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
-% perform subframe synchronization of cameras (linear interp)
+
+if isfield(handles.Cam,'sync_del')
+    y = input('Sync Data Already Exists.  Do you want to recompute the delays?:','s');
+    if strcmp(y, 'y')
+        [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
+    end
+else
+    [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
+    
+end
 [handles.Cam] = subframe_sync(handles.Cam);
+% perform subframe synchronization of cameras (linear interp)
+
 guidata(hObject,handles);
 
 
@@ -773,7 +783,7 @@ for c = 1:ncam
     if dp <0 %if difference is negative, pad the original point matrix
         Cam(c).pts(:,:,npts_orig+1:npts_orig+abs(dp)) = NaN*zeros(2,size(Cam(c).pts,2),abs(dp));
     elseif dp>0 %if the difference is positive, pad the imported point matrix
-        import_struct.Cam(c).pts(:,:,npts_orig+1:npts_orig+abs(dp)) = NaN*zeros(2,import_struct.size(Cam(c).pts,2),abs(dp));
+        import_struct.Cam(c).pts(:,:,npts_orig+1:npts_orig+abs(dp)) = NaN*zeros(2,size(import_struct.Cam(c).pts,2),abs(dp));
     end
     
     %determine which points were not picked in the original project

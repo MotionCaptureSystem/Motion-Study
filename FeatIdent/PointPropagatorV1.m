@@ -220,6 +220,7 @@ function current_timestep_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+set(handles.project_epipolar,'Value', 0)
 tstep = str2double(get(hObject,'String'));
 
 if tstep < get(handles.time_slider,'Min')
@@ -266,7 +267,7 @@ function current_point_label_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of current_point_label as a double
 
 if get(handles.project_epipolar,'Value')
-    project_epipolar(handles.project_epipolar,eventdata,handles);
+    project_epipolar_Callback(handles.project_epipolar,eventdata,handles);
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -415,51 +416,80 @@ function project_epipolar_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % Hint: get(hObject,'Value') returns toggle state of project_epipolar
-Cam = handles.Cam;
-cams = which_cams(Cam);
-current_cam = str2double(get(handles.current_cam,'String'));
-pt = str2double(get(handles.current_point_label,'String'));
-timestep = str2double(get(handles.current_timestep,'String'));
-proj_epi = get(hObject,'Value');
-set(handles.current_image,'NextPlot', 'Add');
+bbox_delta = handles.bbox_delta;
+Cam = handles.Cam;                  %Get the Cam Struct 
+cams = which_cams(Cam);             %Get the cam numbers with data 
+current_cam = str2double(get(handles.current_cam,'String'));    %determine which camera is the current camera
+pt = str2double(get(handles.current_point_label,'String'));     %determinw which point label is selected
+timestep = str2double(get(handles.current_timestep,'String'));  %determine the current frame in this camera
+proj_epi = get(hObject,'Value');               %determine if the project epi option is selected
+set(handles.current_image,'NextPlot', 'Add');  %add the lines to the current plot
 if proj_epi
     for cc = cams
-        if cc == current_cam
+        if cc == current_cam 
             continue;
         end
-        t = timestep - floor(Cam(current_cam).sync_del*119.88)- Cam(cc).start_frame + 1 + floor(119.88*Cam(cc).sync_del)+1;
-        if ~isnan(Cam(cc).pts_rect(:,t,pt))
-            epi_line = epipolar_line(Cam(cc).H,Cam(current_cam).H,Cam(cc).K\[Cam(cc).pts_rect(:,t,pt);1]);
-            x = linspace(-1,1,100);
-            line = x*epi_line(1)+epi_line(2);
-            x_n = [x;line];
-            kc = Cam(current_cam).kc;
-            xd = [zeros(2,size(x_n,2));ones(1,size(x_n,2))];
-            for pp = 1:size(x_n,2)
-                pt_n = x_n(:,pp);
-                r = norm(pt_n);
-                xd(1:2,pp) = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*pt_n+[2*kc(3)*pt_n(1)*pt_n(2)+ kc(4)*(r^2+2*pt_n(1)^2);2*kc(4)*pt_n(1)*pt_n(2)+kc(3)*(r^2+2*pt_n(2)^2)];
-            end
-            pts = Cam(current_cam).K*xd;
-            b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:);
-            indx = isnan(pts) | repmat(pts(1,:)<b_box(1), 3, 1) | repmat(pts(1,:)>(b_box(1)+b_box(3)), 3, 1) ...
-                        | repmat(pts(2,:)<b_box(2), 3, 1) | repmat(pts(2,:)>(b_box(2)+b_box(4)), 3, 1);
-            indx = sum(indx)==0;
-            pts = pts(:,find(indx));
-            if ~isempty(pts)
-                h = plot(handles.current_image, pts(1,:)'-b_box(1),pts(2,:)'-b_box(2),'-c');
-                set(h, 'HitTest', 'off');
-                h = text(pts(1,1)'-b_box(1),pts(2,1)'-b_box(2),num2str(cc), 'color', 'c');
-                set(h, 'HitTest', 'off');
+        
+        if isempty(Cam(cc).sync_del)
+            fprintf('No sync data available for camera %d. Skipping this camera. \n', cc)
+            continue;
+        end
+        %determine the world time
+        t_world = timestep - floor(Cam(current_cam).sync_del*119.88);
+        %determine the time in the camera from which an epipolar line
+        %should be projected.
+        tt = t_world + floor(119.88*Cam(cc).sync_del)- Cam(cc).start_frame + 1;
+        if tt<1 || tt>length(Cam(cc).pts)
+            continue;
+        end        
+        %tt = tt-1:tt+1; %get one timestep in either direction
+        linesty = {'c','m','g'};
+        for t = tt  %For each of the desired timesteps
+            %if the points are availabe in this camera
+            if ~isnan(Cam(cc).pts(:,t,pt)) & ~isnan(Cam(cc).pts(:,t+1,pt))
+                p_d = Cam(cc).pts(:,t,pt);  %Grab the point desired from the camera
+                p_dp1 = Cam(cc).pts(:,t+1,pt); %Get this point at the next timestep
+                %remove distortion from this points
+                p_r = rm_distortion(p_d,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
+                p_rp1 = rm_distortion(p_dp1,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);
+                %interpolate the point in undist pix coords
+                p_r = p_r + (p_r - p_rp1)*(Cam(current_cam).sync_del*119.88-floor(Cam(current_cam).sync_del*119.88));
+                %determine the epipolar line parameters
+                epi_line = epipolar_line(Cam(cc).H,Cam(current_cam).H,Cam(cc).K\[p_r;1]);
+                x = linspace(-1,1,100);                 %define x retinal coords for line
+                line = x*epi_line(1)+epi_line(2);       %compute y retinal coords for line
+                x_n = [x;line];                         %combine x and y into points
+                kc = Cam(current_cam).kc;               %distort points
+                xd = [zeros(2,size(x_n,2));ones(1,size(x_n,2))]; %create place holder for distorted points
+                for pp = 1:size(x_n,2)  %compute the distortions
+                    pt_n = x_n(:,pp);
+                    r = norm(pt_n);
+                    xd(1:2,pp) = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*pt_n+[2*kc(3)*pt_n(1)*pt_n(2)+ kc(4)*(r^2+2*pt_n(1)^2);2*kc(4)*pt_n(1)*pt_n(2)+kc(3)*(r^2+2*pt_n(2)^2)];
+                end
+                pts = Cam(current_cam).K*xd;  %compute distorted pixel coords
+                b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:); %determine the bounding box
+                indx = isnan(pts) | repmat(pts(1,:)<b_box(1), 3, 1) | repmat(pts(1,:)>(b_box(1)+b_box(3)), 3, 1) ...
+                            | repmat(pts(2,:)<b_box(2), 3, 1) | repmat(pts(2,:)>(b_box(2)+b_box(4)), 3, 1);
+                indx = sum(indx)==0;     %Trim the line to fit in the bounding box
+                pts = pts(:,find(indx)); 
+                if ~isempty(pts)      %If there are points left in the matrix, plot them.
+                    h = plot(handles.current_image, pts(1,:)'-b_box(1)+bbox_delta,pts(2,:)'-b_box(2)+bbox_delta,'-c');%linesty{t-tt(2)+2});
+                    set(h, 'HitTest', 'off');
+                    h = text(pts(1,1)'-b_box(1),pts(2,1)'-b_box(2),num2str(cc), 'color','c');% linesty{t-tt(2)+2});
+                    set(h, 'HitTest', 'off');
+                end
             end
         end
     end
+else
+    kids = get(handles.current_image, 'Children');
+    delete(kids)
+    current_timestep_Callback(handles.current_timestep, eventdata, handles);    
 end
 
 %--------------------------------------------------------------------------
 %                         My Processing Functions
 %--------------------------------------------------------------------------
-
 % --- Executes on mouse press over axes background.
 function current_image_ButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to project_epipolar (see GCBO)
