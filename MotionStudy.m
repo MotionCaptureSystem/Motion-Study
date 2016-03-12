@@ -191,6 +191,7 @@ function vid_slice(dirname,filename, im_type)
 Video = VideoReader([dirname,filesep,filename]);%Read the video file
 nframe = Video.NumberOfFrames;                  %Determine the number of frames
 kk = 0;
+wbhandle = waitbar(0,['Delacing ',filename,'...']);
 
 for ii = 1:nframe-1
     kk = kk+1;
@@ -200,7 +201,9 @@ for ii = 1:nframe-1
         name = strcat('0',name);
     end
     imwrite(frame,name);
+    waitbar(kk/nframe,wbhandle,['Delacing ',filename,'...',sprintf('%3.1f',kk*100/nframe),'%']);
 end
+delete(wbhandle);
 
 
 % --------------------------------------------------------------------
@@ -429,6 +432,8 @@ end
 if isfield(handles, 'EstStruct')
     save([handles.options.path,filesep,'EstStruct.mat'],'-struct', 'handles','EstStruct', '-v7.3')
 end
+alarmS = load('chirp'); sound(alarmS.y,alarmS.Fs);
+%Play a sound when save finished.
 fprintf('The session has been saved.\n')
 
 
@@ -442,10 +447,12 @@ cam_folders = dir([handles.options.path,filesep,'Cam*.']);
 ncam = length(cam_folders);
 
 cams = [];
+nonempty_folders = [];
 for cc = 1:ncam
     cam_num = str2double(cam_folders(cc).name(4:6));
     if ~isempty(dir([handles.options.path,filesep,cam_folders(cc).name,filesep,'*.png']))
     cams = [cams, cam_num];
+    nonempty_folders=[nonempty_folders,cam_folders(cc)];
     end
 end
 
@@ -463,7 +470,11 @@ else
 end
     
 for cc = handles.options.cams
-    img_list = dir([handles.options.path,filesep,cam_folders(cc==handles.options.cams).name,filesep,'*.png']);
+    img_list = dir([handles.options.path,filesep,nonempty_folders(cc==cams).name,filesep,'*.png']);
+    %img_list = dir([handles.options.path,filesep,cam_folders(cc).name,filesep,'*.png']);
+    %Wrong correlation when: (causing start & stop frame number wrong)
+    %Import all cams, meeting empty folders(302 is empty, 301->301 & 303->302 304->303)
+    %Import cams which don't begin with 301([302:305]->[301:304])
     timesteps = [];
     for pp = 1:length(img_list)
         pic_num = sscanf(img_list(pp).name,'%f');
