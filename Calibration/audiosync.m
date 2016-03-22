@@ -1,5 +1,5 @@
 function [options, camstruct] = audiosync(camstruct,options)
-
+fs_a = options.fs_a;
 if ~isfield(options,'est.cams')
     options.est.cams = input('please specify the cameras to sync:');
 end

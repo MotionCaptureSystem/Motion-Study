@@ -5,7 +5,7 @@ features = eststruct.ukf.Features;
 kinc = eststruct.kinc;
 pts = options.plot.pts;
 npts = size([options.link.BFvecs],2);
-
+fs_c = options.fs_c;
 nsteps = size(features,2);
 figure
 hold on
@@ -54,7 +54,7 @@ end
 
 %% Plot Joint Coords
 link = options.link;
-t = 1/120*linspace(0,size(eststruct.ukf.X,2)-1, size(eststruct.ukf.X,2));
+t = 1/fs_c*linspace(0,size(eststruct.ukf.X,2)-1, size(eststruct.ukf.X,2));
 dof_prev = 0;
 dof_int = [];
 for ll = get_group_links(link,options.groups);

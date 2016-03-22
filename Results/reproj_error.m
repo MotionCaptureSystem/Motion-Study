@@ -1,6 +1,7 @@
 function reproj_error(camstruct, inertstruct, options)
 %proj error flight 3 progrram flow 
 %% Import Plot Settings
+fs_c = options.fs_c;
 cams = options.est.cams;
 camstruct = camstruct(cams);
 link_names = options.link_names;
@@ -37,7 +38,7 @@ meas = zeros(ncam*npts*2,nsteps);
 for c = 1:ncam
     %load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(cams(c)),filesep,'int_cam',num2str(cams(c)),'.mat'],'kc')
     %camstruct(c).dist_c = kc;
-    t = options.tstart-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*120):options.tstop-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*120);
+    t = options.tstart-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c):options.tstop-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c);
     for pp = 1:npts
         meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = camstruct(c).pts_sync(:,t,options.plot.pts_orig(pp));
     end
@@ -128,7 +129,7 @@ for c = 1:ncam
     if exist(path_name,'file')
           
         reproj_fig_ids(c) = figure;
-        imshow([path_name,filesep,num2str(fig_num+round(camstruct(c).sync_del*119.88)),'.png'])
+        imshow([path_name,filesep,num2str(fig_num+round(camstruct(c).sync_del*fs_c)),'.png'])
         hold on
         %Plot measured, EKF, and UKF points
         step = nsteps-5;

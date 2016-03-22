@@ -9,9 +9,9 @@ options.tstop           = 425;                  %Useable timestep will be tstart
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
 
 options.plotflag        = 0;
-options.path            = 'D:\ShandongData2015\Batflight_07242015\Test004';
+options.path            = 'C:\ShandongData2015\Batflight_07242015\Test004';
 options.default_dir     = pwd;
-options.fs              = 120;
+options.fs              = options.fs_c;
 
 %Trajectory Estimation Options
 options.est.cams        = [301,302,303,310,312,318,320,325,333];
@@ -37,10 +37,10 @@ options.plot.linespec2        = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+-
 options.plot.linespec3        = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
 options.plot.colors         =  {'r', 'g', 'b', 'c', 'm', 'k'};
 options.plot.colors2        = [255,255,255,128,0,0,0,0,0,128,255,255;0,128,255,255,255,255,255,128,0,0,0,0;0,0,0,0,0,128,255,255,255,255,255,128]'/255;
-options.plot.savepath       = 'D:\Users\Matt\Documents\GitHub\SciTechPaper';
-options.plot.savefig        = 1;
-options.plot.saveim_reproj  = 1;
-options.plot.saveim_reproje = 1;
+options.plot.savepath       = 'C:\Users\Matt\Documents\GitHub\SciTechPaper';
+options.plot.savefig        = 0;
+options.plot.saveim_reproj  = 0;
+options.plot.saveim_reproje = 0;
 options.plot.fig_txt_props  = {'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'Bold'};
 
 %% Define the Skeleton

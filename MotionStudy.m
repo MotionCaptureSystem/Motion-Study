@@ -73,7 +73,8 @@ handles.Cam(1).b_box = [];
 
 %store the working directory.
 handles.options.working = pwd;
-
+handles.options.fs_c = 119.88;
+handles.options.fs_a = 48000;
 %add subdirectories
 
 %store defualt data directory 
@@ -542,7 +543,7 @@ else
     [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
     
 end
-[handles.Cam] = subframe_sync(handles.Cam);
+[handles.Cam] = subframe_sync(handles.Cam, handles.options);
 % perform subframe synchronization of cameras (linear interp)
 
 guidata(hObject,handles);

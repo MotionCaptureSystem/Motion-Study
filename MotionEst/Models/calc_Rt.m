@@ -14,7 +14,7 @@ function Rt = calc_Rt()
 
 wingspan = .5; %[m] (from wingtip to wingtip, divide by 2 for single wing)
 flap_freq = 4; %[Hz]
-framerate = 120; %[fps]
+framerate = 119.88; %[fps]
 flap_angle = pi/2; %[rad] (only downstroke, mult by 2 for total down-and-up-flap)
 bs_factor = 1;
 

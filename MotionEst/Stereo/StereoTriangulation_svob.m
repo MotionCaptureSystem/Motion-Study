@@ -7,7 +7,7 @@ timesteps = options.stereo.tstart:options.stereo.dt:options.stereo.tstop;
 nsteps    = length(timesteps);
 linestyle1 = options.plot.linestyle1;
 plot_start = options.stereo.tstart;
-fs = 120;
+fs_c = options.fs_c;
 %% Perform Stereo Triangulation for Comparision
 npair = 0;
 pair_list = [];
@@ -26,8 +26,8 @@ for pair = [1:npair]
             %if ~isempty(intersect(pp,camstruct(pair_list(pair,1)).idin(1,pp))) && ~isempty(intersect(pp,camstruct(pair_list(pair,2)).idin(1,pp)))
                 camstruct1 = camstruct(pair_list(pair,1));
                 camstruct2 = camstruct(pair_list(pair,2));
-                stereostruct(pair).pts(:,kk,pts(pp)) = stertridet2(camstruct1.pts_sync(:,timesteps(kk)-camstruct1.start_frame+1+floor(camstruct1.sync_del*fs),pts(pp)), ...
-                                                   camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs),pts(pp)), ...
+                stereostruct(pair).pts(:,kk,pts(pp)) = stertridet2(camstruct1.pts_sync(:,timesteps(kk)-camstruct1.start_frame+1+floor(camstruct1.sync_del*fs_c),pts(pp)), ...
+                                                   camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs_c),pts(pp)), ...
                                                    camstruct1,camstruct2);
             
             stereostruct(pair).cams = pair_list(pair,:);
