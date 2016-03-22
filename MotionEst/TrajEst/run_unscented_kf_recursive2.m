@@ -42,7 +42,7 @@ if strcmp(options.est.type,'joint')
     links = get_group_links(link,options.groups);
     nstate = sum([link(links).nDof]);
     nmeas = 2*size([link(links).BFvecs],2);
-    ncam = size(z,1)/length(nmeas);
+    ncam = size(z,1)/nmeas;
 elseif strcmp(options.est.type,'point')
     nstate = 3*length(options.pts);
     ncam   = length(options.cams);

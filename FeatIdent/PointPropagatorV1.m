@@ -140,7 +140,7 @@ function current_cam_Callback(hObject, eventdata, handles)
 current_cam = str2double(get(hObject,'String'));
 start_frame = handles.Cam(current_cam).start_frame;
 end_frame = handles.Cam(current_cam).end_frame;
-fs_c = handles.options.fs_c
+fs_c = handles.options.fs_c;
 
 if ~isfield(handles.Cam(current_cam),'sync_del')
     set(handles.sync_del,'String','NA')
