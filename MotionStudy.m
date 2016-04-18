@@ -70,6 +70,7 @@ handles.Cam(1).H = [];
 handles.Cam(1).K = [];
 handles.Cam(1).kc = [];
 handles.Cam(1).b_box = [];
+handles.Cam(1).frame = [];
 
 %store the working directory.
 handles.options.working = pwd;
@@ -612,7 +613,6 @@ handles.options.plot.colors     = hsv(length(handles.options.stereo.pts));
 
 handles.Stereo = StereoTriangulation_svob(handles.Cam, handles.options);
 guidata(hObject, handles);
-
 
 % --------------------------------------------------------------------
 function rectify_Callback(hObject, eventdata, handles)

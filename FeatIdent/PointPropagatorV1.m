@@ -90,6 +90,7 @@ set(handles.current_image,'NextPlot','replacechildren');
 handles.lastSliderVal = get(handles.time_slider,'Value');
 % Choose default command line output for PointPropagatorV1
 handles.output = hObject;
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -151,21 +152,18 @@ else
 end
 
 % If the frames have not been imported, then import them.
-if isempty(handles.Cam(current_cam).frames)
+if ~isfield(handles.Cam(current_cam),'frame')
+    handles.Cam(current_cam).frame = [];
+end
+if isempty(handles.Cam(current_cam).frame)
     cam_str = num2str(current_cam);
     while length(cam_str)<3
         cam_str = ['0',cam_str];
     end
-    %vidObj = VideoReader([handles.data_dir,filesep,'Cam',cam_str,filesep,'cam',cam_str,'.MP4']);
-    %color_frames = read(vidObj, [start_frame, end_frame]);
-    %nframes = size(color_frames,4);
-    nframes = handles.Cam(current_cam).end_frame - handles.Cam(current_cam).start_frame + 1;
-    for ff = 1:nframes
-        handles.Cam(current_cam).frames(:,:,ff) = double(rgb2gray(imread([handles.data_dir,filesep,'Cam',cam_str,filesep,num2str(ff+start_frame-1),'.png'])))/255;
-    end
     
-    [~,~,nframes] = size(handles.Cam(current_cam).frames); 
-    handles.Cam(current_cam).nframes = nframes;
+    handles.Cam(current_cam).frame = double(rgb2gray(imread([handles.data_dir,filesep,'Cam',cam_str,filesep,num2str(start_frame),'.png'])))/255;
+   
+    handles.Cam(current_cam).nframes = end_frame - start_frame + 1;
     handles.Cam(current_cam).rot_img = 0;
     if isempty(handles.Cam(current_cam).pts)
         handles.Cam(current_cam).pts = NaN*ones(2,nframes);
@@ -223,6 +221,15 @@ function current_timestep_Callback(hObject, eventdata, handles)
 
 %set(handles.project_epipolar,'Value', 0)
 tstep = str2double(get(hObject,'String'));
+current_cam = str2double(get(handles.current_cam,'String'));
+cam_str = ['Cam',num2str(current_cam)];
+options = handles.options;
+
+while cam_str<6
+    cam_str = ['0',cam_str];
+end
+
+handles.Cam(current_cam).frame = imread([options.path,filesep,cam_str,filesep,num2str(tstep),'.png']);
 
 if tstep < get(handles.time_slider,'Min')
     tstep = get(handles.time_slider,'Min');
@@ -301,7 +308,7 @@ MStudyHandles.Cam = handles.Cam;
 setappdata(0,'MStudyHands', MStudyHandles);
 
 for cc = 1:length(handles.Cam)
-    handles.Cam(cc).frames = [];
+    handles.Cam(cc).frame = [];
 end
 fprintf('Saving data ... do not close MATLAB or MOTIONSTUDY ... \n')
 %save([handles.options.path,filesep,'CamStruct.mat'], '-struct', 'handles','Cam', '-v7.3')
@@ -335,6 +342,11 @@ function time_slider_Callback(hObject, eventdata, handles)
     %disp(['at slider value ' num2str(get(hObject,'Value'))]);
     set(handles.current_timestep,'String',num2str(newVal))
     current_cam = str2double(get(handles.current_cam,'String'));
+    cam_str = ['Cam',num2str(current_cam)];
+    while cam_str<6
+    cam_str = ['0',cam_str];
+    end
+    handles.Cam(current_cam).frame = imread([options.path,filesep,cam_str,filesep,num2str(tstep),'.png']);
     handles = show_image(hObject,handles);
     %set(handles.image_handle, 'ButtonDownFcn', {@pick_points,handles});
     if ~isempty(handles.Cam(current_cam).pts);
@@ -662,10 +674,10 @@ if isfield(handles.Cam(cam),'b_box')
     if b_box(2)+b_box(4)>720
         b_box(4) = 720-b_box(2);
     end
-    h = imshow(handles.Cam(cam).frames(b_box(2):b_box(2)+b_box(4),b_box(1):b_box(1)+b_box(3),tstep),'Parent',handles.current_image);
+    h = imshow(handles.Cam(cam).frame(b_box(2):b_box(2)+b_box(4),b_box(1):b_box(1)+b_box(3)),'Parent',handles.current_image);
     handles.Cam(cam).zoom = 1;
 else
-    h = imshow(handles.Cam(cam).frames(:,:,tstep),'Parent',handles.current_image);
+    h = imshow(handles.Cam(cam).frame,'Parent',handles.current_image);
 end
 handles.image_handle = h;
 
