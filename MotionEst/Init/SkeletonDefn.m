@@ -33,10 +33,10 @@
 %             Node Name   Parent    Child       Connecting Point       Group   ID Kernal  
 NodeNames   = {'BB'      ,   [] ,    [2],            [],                1,      'YPR';
               'RHum'     ,   [1],    [3],            [3],               2,      'DH';
-              'RRad'     ,   [2],    [4,5,6],        [2],               2,      'DH';
-              'RD3Met'   ,   [3],    [],             [2],               3,      'DH'; 
-              'RD4Met'   ,   [3],    [],             [2],               3,      'DH';
-              'RD5Met'   ,   [3],    [],             [2],               3,      'DH'};
+              'RRad'     ,   [2],    [4,5,6],        [1],               2,      'DH';
+              'RD3Met'   ,   [3],    [],             [1],               3,      'DH'; 
+              'RD4Met'   ,   [3],    [],             [1],               3,      'DH';
+              'RD5Met'   ,   [3],    [],             [1],               3,      'DH'};
           
 nnodes = length(NodeNames);
 
@@ -80,9 +80,9 @@ end
 %Dof Type Specification (1 for translational, 0 for rotational)
 for ii = 1:length(synthConfig.link);
     if synthConfig.link(ii).nDof == 6;
-        synthConfig.link(ii).tDof = [1;1;1;0;0;0]';
+        synthConfig.link(ii).tDof = [1,1,1,0,0,0];
     else
-        synthConfig.link(ii).tDof = zeros(synthConfig.link(ii).nDof,1)';
+        synthConfig.link(ii).tDof = zeros(1,synthConfig.link(ii).nDof);
     end
 end
 
@@ -105,33 +105,34 @@ synthConfig.link(nn).offsets = [0;0;0];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 nn = nn+1;
 %----------------------------------Raduis CF Defn---------------------------------------
+rad_len = 70;
 gamma = 85/180*pi;
 synthConfig.link(nn).thetas  = [0];
 synthConfig.link(nn).alphas  = [0];
 synthConfig.link(nn).disps   = [0];
-synthConfig.link(nn).offsets = 70;
+synthConfig.link(nn).offsets = rad_len;
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 nn = nn+1;
 
 %----------------------------------Digit 3 Metacarpal CF Defn---------------------------------------
-%met3_len   = LinkLen(browne,nn);
+met3_len   = 70;
 synthConfig.link(nn).thetas  = [0;0];
 synthConfig.link(nn).alphas  = [pi/2;0];
 synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;70];
+synthConfig.link(nn).offsets = [0;met3_len];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 nn = nn+1;
 
 %----------------------------------Digit 4 Metacarpal CF Defn---------------------------------------
-%met4_len   = LinkLen(browne,nn);
+met4_len   = 70;
 synthConfig.link(nn).thetas  = [0;0];
 synthConfig.link(nn).alphas  = [pi/2;0];
 synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;70];
+synthConfig.link(nn).offsets = [0;met4_len];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 nn = nn+1;
 %----------------------------------Digit 5 Metacarpal CF Defn---------------------------------------
-%met5_len   = LinkLen(browne,nn);
+met5_len   = 70;
 synthConfig.link(nn).thetas  = [0;0];
 synthConfig.link(nn).alphas  = [pi/2;0];
 synthConfig.link(nn).disps   = [0;0];
@@ -143,30 +144,30 @@ nn = nn+1;
 %Create Body Fixed Vectors, parent child relations, and DH params
 %link 1 
 synthConfig.link(1).BFvecs(:,1) = [0,0,0]';
-synthConfig.link(1).BFvecs(:,2) = [35,10,0];
-synthConfig.link(1).BFvecs(:,3) = [35,-10,0];
-synthConfig.link(1).BFvecs(:,4) = [30,0,-5];
-synthConfig.link(1).BFvecs(:,5) = [30,0,5];
+synthConfig.link(1).BFvecs(:,2) = [35,10,0]';
+synthConfig.link(1).BFvecs(:,3) = [35,-10,0]';
+synthConfig.link(1).BFvecs(:,4) = [30,0,-5]';
+synthConfig.link(1).BFvecs(:,5) = [30,0,5]';
 
 %link 2
 synthConfig.link(2).BFvecs(:,1) = [0,0,0]';
-synthConfig.link(2).BFvecs(:,2) = [40,0,0];
+%synthConfig.link(2).BFvecs(:,2) = [0,-hum_len,0]';
 
 %link 3
 synthConfig.link(3).BFvecs(:,1) = [0,0,0]';
-synthConfig.link(3).BFvecs(:,2) = [60,0,0];
+%synthConfig.link(3).BFvecs(:,2) = [-rad_len,0,0]';
 
 %link 4
 synthConfig.link(4).BFvecs(:,1) = [0,0,0]';
-synthConfig.link(4).BFvecs(:,2) = [60,0,0];
+%synthConfig.link(4).BFvecs(:,2) = [-met3_len,0,0]';
 
 %link 5
 synthConfig.link(5).BFvecs(:,1) = [0,0,0]';
-synthConfig.link(5).BFvecs(:,2) = [60,0,0];
+%synthConfig.link(5).BFvecs(:,2) = [-met4_len,0,0]';
 
 %link 6
 synthConfig.link(6).BFvecs(:,1) = [0,0,0]';
-synthConfig.link(6).BFvecs(:,2) = [60,0,0];
+%synthConfig.link(6).BFvecs(:,2) = [-met5_len,0,0]';
 
 
 

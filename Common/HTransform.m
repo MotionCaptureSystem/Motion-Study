@@ -17,10 +17,10 @@ jj = 1;
 path = kinpath(link,links(1),links(end));
 q = q([link(path).StateInds],1);
 for ll = path
-    thetas = zeros(link(ll).nDof,1);
-    disps  = zeros(link(ll).nDof,1);
     %if identification kernal is DH -> pull out vars accordingly
     if strcmp(link(ll).IDkern,'DH')
+        thetas = zeros(link(ll).nDof,1);
+        disps  = zeros(link(ll).nDof,1);
         if ll>1
             if strcmp(link(ll-1).IDkern,'YPR')
                 H = if_last_ypr(H,ll,link);
@@ -44,7 +44,8 @@ for ll = path
                                link(ll).disps+disps,link(ll).offsets);
     %if identification kernal is YPR, -> pull out vars accordingly
     elseif  strcmp(link(ll).IDkern,'YPR') 
-
+        thetas = zeros(link(ll).nDof,1)/2;
+        disps  = zeros(link(ll).nDof,1)/2;
         trans = 1;
         rot   = 1;
         %for all degrees of freedom for this link

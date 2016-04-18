@@ -21,10 +21,20 @@ nmeas = ncam*length([link(links).MeasInds]);
 
 Pi0 = [1,0,0,0;0,1,0,0];
 z_hat = [0;0;1;0];
+if isempty(link(links(1)).BFvecs);
+    MeasStart = link(links(2)).MeasInds(1);         
+else
+    MeasStart = link(links(1)).MeasInds(1);            
+end
 
 %Grab a mean
 y_bark = zeros(nmeas,1);
-Qk = 1*eye(length(y_bark));
+%Qk = 1*eye(length(y_bark));
+Qk = zeros(length(y_bark));
+%uncert = 2*[1:length(links)];
+%uncert = logspace(0,3,length(links));
+%uncert = {[1,1,1],[3,1],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
+uncert = {[.001,.001,.001,.001,.001],[.001],[.001],[.001],[.001],[.001],[.001]};
 for cc = 1:ncam         %for each camera
     Hin = invH(camstruct(cams(cc)).H);
     for ll = links
@@ -36,7 +46,8 @@ for cc = 1:ncam         %for each camera
             %Determine predicted range to point
             lambda = z_hat'*Hin*H_ll*x_lpi; 
             %Determine Sensor Model Jacobian
-            ndx = nmeas/ncam*(cc-1)+link(ll).MeasInds(2*pp-1:2*pp)-link(links(1)).MeasInds(1)+1;
+            
+            ndx = nmeas/ncam*(cc-1)+link(ll).MeasInds(2*pp-1:2*pp)-MeasStart+1;
             y_bark(ndx) = 1/lambda*Pi0*[camstruct(cams(cc)).K,[0;0;0];0,0,0,1]*Hin*H_ll*x_lpi;
 %             p = [camstruct(cams(cc)).foc_l;
 %                  camstruct(cams(cc)).skew; 
@@ -55,7 +66,8 @@ for cc = 1:ncam         %for each camera
 %             uncertainty_increase_factor = 1.2;
 %             % multiply by this to increase uncertainty due to unmodeled things
 %             % (uncertainty in distortion, higher-order-uncertainty, etc)
-%             Qk(ndx,ndx) = Q2*uncertainty_increase_factor;
+             link_inds = links == ll;
+             Qk(ndx,ndx) = uncert{ll}(pp)* eye(length(ndx));
 
         end
     end

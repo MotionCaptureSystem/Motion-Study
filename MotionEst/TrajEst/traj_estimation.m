@@ -45,11 +45,13 @@ if strcmp(options.est.type,'joint')
     for ll = links
         n_bf_pts = size(options.link(ll).BFvecs,2);
         n_pts_tot = n_pts_tot+n_bf_pts;
-        for kk = 1:nsteps
-        X = [eye(3,3),zeros(3,1)]*hnode2node(kinc(kk),options,1,ll)*[options.link(ll).BFvecs;ones(1,n_bf_pts)];
-        features(3*(n_pts_tot-n_bf_pts)+1:3*n_pts_tot,kk) = X(:);
+        if n_bf_pts
+            for kk = 1:nsteps
+            X = [eye(3,3),zeros(3,1)]*hnode2node(kinc(kk),options,1,ll)*[options.link(ll).BFvecs;ones(1,n_bf_pts)];
+            features(3*(n_pts_tot-n_bf_pts)+1:3*n_pts_tot,kk) = X(:);
+            end
+            %assoc(:,(n_pts_tot-n_bf_pts)+1:n_pts_tot) = [ll*ones(1,n_bf_pts);1:n_bf_pts];
         end
-        assoc(:,(n_pts_tot-n_bf_pts)+1:n_pts_tot) = [ll*ones(1,n_bf_pts);1:n_bf_pts];
     end
 
     eststruct.ukf.Features = features;

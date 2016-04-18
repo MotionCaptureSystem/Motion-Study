@@ -25,7 +25,7 @@ for pp = 1:size(phi1,2)
     m = le_phi(2)/le_phi(1);
     b = ep_phi(2)-m*ep_phi(1);
 
-    ep_line(pp,:) = [m b];
+    ep_line(pp,:) = [le_phi(1:2)', ep_phi(1:2)'];
 end
 
 

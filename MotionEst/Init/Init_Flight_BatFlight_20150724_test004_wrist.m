@@ -52,7 +52,8 @@ options      = create_meas_vec(options);
 
 %% Set the point associations and create a matrix of camera measurements
 for cc = options.est.cams
-    camstruct(cc).pt_assoc = {[4,1,5],[6,5],[8,7,6],[8,8],[10,9,8],[14,13,8],[17,8]};
+    %camstruct(cc).pt_assoc = {[4,1,5],[6,5],[8,7,6],[8,8],[10,9,8],[14,13,8],[17,8]};
+    camstruct(cc).pt_assoc = {[4,1,5],[6],[8,7],[],[10,9],[14,13],[17]};
 end
 options.est.meas = create_meas_matrix(camstruct, options);
 

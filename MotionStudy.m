@@ -382,20 +382,28 @@ handles.options.path = uigetdir(handles.options.path);
 if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a data file, should it be loaded?
     l = input('A previous data file exists. Do you want to load it? [y/n]','s');
     if strcmp(l,'y') %If the user specifies yes, load the data
+        handles = rmfield(handles,'Cam');   %Clear the initialized Cam structure
         fprintf('Loading CamStruct.mat ... \n')
         load([handles.options.path,filesep,'CamStruct.mat'])
-        handles.Cam = Cam; %all data is contained in the Cam Structure
-        
+        if exist('cams', 'var')   %if the files is saved in the new format, store as follows
+            handles.Cam(cams(1):cams(2)) = Cam;
+        else %if the file is saved in the old format, store as follows
+            handles.Cam = Cam; %all data is contained in the Cam Structure
+        end
         %if trajectory estimation has been performed, load that too
         if exist([handles.options.path,filesep,'EstStruct.mat'],'file')
             fprintf('Loading EstStruct.mat ... \n')
             load([handles.options.path,filesep,'EstStruct.mat'])
+            if exist('options','var')
+                handles.options = options;
+            end
+            if exist('kinc','var')
+                EstStruct.kinc = kinc;
+            end
+            if exist('ukf', 'var')
+                EstStruct.ukf = ukf;
+            end
             handles.EstStruct = EstStruct;
-%             if isfield(handles.EstStruct, 'kinc')
-%                 handles.options.est.type = 'joint';
-%             else
-%                 handles.options.est.type = 'point';
-%             end
         end
         
         %if there is stereo triangluation data saved, load that too
@@ -436,12 +444,35 @@ for cc = 1:length(handles.Cam)
     handles.Cam(cc).frames = [];
 end
 fprintf('Saving data ... do not close MATLAB or MOTIONSTUDY ... \n')
-save([handles.options.path,filesep,'CamStruct.mat'], '-struct', 'handles','Cam', '-v7.3')
+cams = which_cams(handles.Cam);
+cams = [cams(1), cams(end)];
+Cam = handles.Cam(cams(1):cams(2));
+save([handles.options.path,filesep,'CamStruct.mat'], 'Cam', 'cams')
 if isfield(handles, 'Stereo')
-    save([handles.options.path,filesep,'StereoStruct.mat'],'-struct', 'handles','Stereo', '-v7.3')
+    Stereo = handles.Stereo;
+    save([handles.options.path,filesep,'StereoStruct.mat'],'Stereo')
 end
 if isfield(handles, 'EstStruct')
-    save([handles.options.path,filesep,'EstStruct.mat'],'-struct', 'handles','EstStruct', '-v7.3')
+    %handles.EstStruct.options = handles.options;
+    ukf = handles.EstStruct.ukf;
+    options = handles.options;
+    if isfield(options,'est')
+        if isfield(options.est,'Rt_handle')
+            options.est = rmfield(options.est, 'Rt_handle');
+        end
+        if isfield(options,'msmt_model')
+            options.est = rmfield(options.est, 'msmt_model');
+        end
+        if isfield(options,'state_update_model')
+            options.est = rmfield(options.est, 'state_update_model');
+        end
+    end
+    if isfield(handles.EstStruct, 'kinc')
+        kinc = handles.EstStruct.kinc;
+        save([handles.options.path,filesep,'EstStruct.mat'],'options','kinc','ukf')
+    else
+        save([handles.options.path,filesep,'EstStruct.mat'],'options','ukf')
+    end
 end
 alarmS = load('chirp'); sound(alarmS.y,alarmS.Fs);
 %Play a sound when save finished.
@@ -821,13 +852,8 @@ function est_options_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 handles.options.est.type        = input('What type of state estimator would you like to initialize? [joint,point]:','s');
 
-% if strcmp(handles.options.est.type,'joint')
-    [init_file, init_path, ~]       = uigetfile(['.',filesep,'MotionEst',filesep,'Init'],'Choose your initialization file:');
-    [handles.Cam, handles.options]  = feval([init_file(1:end-2)], handles.Cam, handles.options);
-% elseif strcmp(handles.options.est.type,'point')
-%     
-%     
-% end
+[init_file, init_path, ~]       = uigetfile(['.',filesep,'MotionEst',filesep,'Init'],'Choose your initialization file:');
+[handles.Cam, handles.options]  = feval([init_file(1:end-2)], handles.Cam, handles.options);
 
 guidata(hObject, handles);
 
@@ -838,23 +864,5 @@ function estimator_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [handles.EstStruct, options] = traj_estimation(handles.options);
-
-% handles.options.plot        = options.plot;
-% handles.options.est         = options.est;
-% handles.options.groups      = options.groups;
-% 
-% handles.options.tstart      = options.tstart;
-% handles.options.tstop       = options.tstop;
-% handles.options.interp      = options.interp;
-% handles.options.plotflag    = options.plotflag ;
-% 
-% if strcmp(options.est.type, 'joint')
-%     handles.options.link        = options.link;
-%     handles.options.groups      = options.groups;
-%     handles.options.link_names  = options.link_names;
-%     handles.options.dof_names   = options.dof_names;
-% elseif strcmp(options.est.type, 'point')
-%     
-% end
 
 guidata(hObject, handles);

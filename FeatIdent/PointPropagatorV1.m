@@ -22,7 +22,7 @@ function varargout = PointPropagatorV1(varargin)
 
 % Edit the above text to modify the response to help PointPropagatorV1
 
-% Last Modified by GUIDE v2.5 26-Feb-2016 11:50:50
+% Last Modified by GUIDE v2.5 23-Mar-2016 15:51:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -304,7 +304,11 @@ for cc = 1:length(handles.Cam)
     handles.Cam(cc).frames = [];
 end
 fprintf('Saving data ... do not close MATLAB or MOTIONSTUDY ... \n')
-save([handles.options.path,filesep,'CamStruct.mat'], '-struct', 'handles','Cam', '-v7.3')
+%save([handles.options.path,filesep,'CamStruct.mat'], '-struct', 'handles','Cam', '-v7.3')
+cams = which_cams(handles.Cam);
+cams = [cams(1), cams(end)];
+Cam = handles.Cam(cams(1):cams(2));
+save([handles.options.path,filesep,'CamStruct.mat'], 'Cam', 'cams')
 fprintf('The session has been saved.\n')
 %varargout{1} = handles.Cam;
 %save([handles.data_dir,filesep,'CamStruct.mat'], '-struct', 'handles','Cam','-v7.3')
@@ -446,21 +450,26 @@ if proj_epi
         
         %determine the world time
         t_world = timestep - floor(Cam(current_cam).sync_del*fs_c);
-        dt_wc = 1 - (Cam(current_cam).sync_del*fs_c-floor(Cam(current_cam).sync_del*fs_c));
+        if Cam(current_cam).sync_del
+            dt_wc = 1 - (Cam(current_cam).sync_del*fs_c-floor(Cam(current_cam).sync_del*fs_c));
+        else
+            dt_wc = 0;
+        end
         %determine the time in the camera from which an epipolar line
         %should be projected.
         tt = t_world + floor(fs_c*Cam(cc).sync_del)- Cam(cc).start_frame + 1;
+        
         if tt<1 || tt>length(Cam(cc).pts) || pt>size(Cam(cc).pts,3)
             continue;
         end        
         %tt = tt-1:tt+1; %get one timestep in either direction
         linesty = {'c','m','g'};
         for t = tt  %For each of the desired timesteps
-            %if Cam(cc).sync_del
+            if Cam(cc).sync_del
                 dt_wi = 1 - (Cam(cc).sync_del*fs_c-floor(Cam(cc).sync_del*fs_c));
-            %else
-                %dt_wi = 0;
-            %end
+            else
+                dt_wi = 0;
+            end
             dt_ci = dt_wc - dt_wi;
             d = sign(dt_ci);
             %if the points are availabe in this camera
@@ -485,9 +494,15 @@ if proj_epi
                 
                 %determine the epipolar line parameters
                 epi_line = epipolar_line(Cam(cc).H,Cam(current_cam).H,Cam(cc).K\[p_r;1]);
-                x = linspace(-1,1,100);                 %define x retinal coords for line
-                line = x*epi_line(1)+epi_line(2);       %compute y retinal coords for line
-                x_n = [x;line];                         %combine x and y into points
+                %project bounding box into frame
+                b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:); %determine the bounding box
+                pts_bbox = [b_box(1:2)', b_box(1:2)' + b_box(3:4)';ones(1,2)];
+                
+                pts_bbox_ud(:,1) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,1),Cam(current_cam).K,Cam(current_cam).fc,Cam(current_cam).cc,Cam(current_cam).alpha_c,Cam(current_cam).kc);1];%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
+                pts_bbox_ud(:,2) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,2),Cam(current_cam).K,Cam(current_cam).fc,Cam(current_cam).cc,Cam(current_cam).alpha_c,Cam(current_cam).kc);1];
+                x = linspace(pts_bbox_ud(1,1),pts_bbox_ud(1,2),300);  %define x retinal coords for line
+                y = epi_line(2)/epi_line(1)*(x-epi_line(3))+epi_line(4);       %compute y retinal coords for line
+                x_n = [x;y];                         %combine x and y into points
                 kc = Cam(current_cam).kc;               %distort points
                 xd = [zeros(2,size(x_n,2));ones(1,size(x_n,2))]; %create place holder for distorted points
                 for pp = 1:size(x_n,2)  %compute the distortions
@@ -496,7 +511,7 @@ if proj_epi
                     xd(1:2,pp) = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*pt_n+[2*kc(3)*pt_n(1)*pt_n(2)+ kc(4)*(r^2+2*pt_n(1)^2);2*kc(4)*pt_n(1)*pt_n(2)+kc(3)*(r^2+2*pt_n(2)^2)];
                 end
                 pts = Cam(current_cam).K*xd;  %compute distorted pixel coords
-                b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:); %determine the bounding box
+                
                 indx = isnan(pts) | repmat(pts(1,:)<b_box(1), 3, 1) | repmat(pts(1,:)>(b_box(1)+b_box(3)), 3, 1) ...
                             | repmat(pts(2,:)<b_box(2), 3, 1) | repmat(pts(2,:)>(b_box(2)+b_box(4)), 3, 1);
                 indx = sum(indx)==0;     %Trim the line to fit in the bounding box
@@ -639,10 +654,10 @@ if isfield(handles.Cam(cam),'b_box')
         b_box(1) = 1;
     end
     if b_box(2)<1
-        b_box(3) = 1;
+        b_box(2) = 1;
     end
     if b_box(1)+b_box(3)>1280
-        b_box(2) = 1280-b_box(1);
+        b_box(3) = 1280-b_box(1);
     end
     if b_box(2)+b_box(4)>720
         b_box(4) = 720-b_box(2);
@@ -660,23 +675,6 @@ else
     set(handles.image_handle, 'ButtonDownFcn', {@current_image_ButtonDownFcn, handles});
     set(handles.image_handle, 'Interruptible', 'on');
 end
-
-function cam_list = which_cams(Cams)
-%%Determines which cameras have been imported. CAMS is a structure of
-%%camera data. The required subfield is CAM.STARTFRAME.  This field is
-%%automatically populated when a camera is imported.  CAM_LIST is a row
-%%vector of the cams which have been successfully imported.
-
-ncams = length(Cams);
-cam_list = [];
-%Run loop for length of Cam structure
-for cc = 1:ncams
-    %If the camera has been imported, store the camera number
-    if ~isempty(Cams(cc).start_frame)
-        cam_list = [cam_list, cc];
-    end
-end
-
 
 % --- Executes on button press in track_pts.
 function track_pts_Callback(hObject, eventdata, handles)
@@ -737,3 +735,157 @@ function sync_del_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in predict_epipolar.
+function predict_epipolar_Callback(hObject, eventdata, handles)
+% hObject    handle to predict_epipolar (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+bbox_delta = handles.bbox_delta;
+Cam = handles.Cam;                  %Get the Cam Struct 
+cams = input('In which cams would you like to search for points?:');             %Get the cam numbers with data 
+current_cam = str2double(get(handles.current_cam,'String'));    %determine which camera is the current camera
+%pt = str2double(get(handles.current_point_label,'String'));     %determinw which point label is selected
+timestep = str2double(get(handles.current_timestep,'String'));  %determine the current frame in this camera
+proj_epi = get(hObject,'Value');               %determine if the project epi option is selected
+set(handles.current_image,'NextPlot', 'Add');  %add the lines to the current plot
+no_sync = [];
+fs_c = handles.options.fs_c;
+
+%find available points for prediction in this view (pts seen in at
+%least two other cameras
+pts_avail_mat = [];
+ncams = 0;
+cams_left = [];
+max_pt = 0;
+for cc = cams
+    p_r{cc == cams} = [];
+    
+    if cc == current_cam 
+        continue;
+    end
+
+    if isempty(Cam(cc).sync_del)
+        no_sync = [no_sync, cc];
+        continue;
+    end
+
+    %determine the world time
+    t_world = timestep - floor(Cam(current_cam).sync_del*fs_c);
+    if Cam(current_cam).sync_del
+        dt_wc = 1 - (Cam(current_cam).sync_del*fs_c-floor(Cam(current_cam).sync_del*fs_c));
+    else
+        dt_wc = 0;
+    end
+    %determine the time in the camera from which an epipolar line
+    %should be projected.
+    tt = t_world + floor(fs_c*Cam(cc).sync_del)- Cam(cc).start_frame + 1;
+
+    if tt<1 || tt>length(Cam(cc).pts) %|| pt>size(Cam(cc).pts,3)
+        continue;
+    end
+
+    if Cam(cc).sync_del
+        dt_wi = 1 - (Cam(cc).sync_del*fs_c-floor(Cam(cc).sync_del*fs_c));
+    else
+        dt_wi = 0;
+    end
+    dt_ci = dt_wc - dt_wi;
+    d = sign(dt_ci);
+    %if the points are availabe in this camera
+    pts_avail = [1 0]*squeeze((~isnan(Cam(cc).pts(:,tt,:)) & ~isnan(Cam(cc).pts(:,tt+d,:))));
+    if ~any(pts_avail)
+        continue
+    end
+    ncams = ncams + 1;
+    cams_left = [cams_left, cc];
+    if size(pts_avail,2)>size(pts_avail_mat,2)
+        pts_avail_mat = [pts_avail_mat, zeros(size(pts_avail_mat,1),length(pts_avail)-size(pts_avail_mat,2))];
+    end
+    
+    p_r{cams == cc} = NaN*zeros(2,length(pts_avail));
+    for pt = find(pts_avail)
+        if dt_ci < 0 
+            pt1 = Cam(cc).pts(:,tt+d,pt);
+            pt2 = Cam(cc).pts(:,tt,pt);
+        else
+            pt1 = Cam(cc).pts(:,tt,pt);
+            pt2 = Cam(cc).pts(:,tt+d,pt);
+        end
+
+        %remove distortion from the points
+        p1_r = rm_distortion(pt1,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
+        p2_r = rm_distortion(pt2,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);
+        %interpolate the point in undist pix coords
+        if dt_ci < 0 
+            p_r{cams == cc}(:,pt) = p1_r + (p2_r - p1_r)*(1+dt_ci);
+        else
+            p_r{cams == cc}(:,pt) = p1_r + (p2_r - p1_r)*dt_ci;
+        end
+        
+    end
+    
+    if size(pts_avail_mat,2)<length(pts_avail)
+        pts_avail_mat = [pts_avail_mat, zeros(size(pts_avail_mat,1),length(pts_avail))];
+    end
+    
+    pts_avail_mat(ncams,1:length(pts_avail)) = pts_avail;
+    
+    if max_pt<find(pts_avail,1,'last')
+        max_pt = find(pts_avail,1,'last');
+    end
+end
+
+pts2est = find(sum(pts_avail_mat)>=2);
+%pts_projectable = find(sum(pts_avail_mat) >= 2);
+%pts_avail_mat   = pts_avail_mat(:,pts_projectable);
+
+for pt = pts2est
+    lines = [];
+    for cc = cams
+        if pt>size(p_r{cams == cc},2)
+            continue;
+        end
+        phi = p_r{cc == cams}(:,pt);
+        if any(isnan(phi))
+            continue;
+        end
+        l = epipolar_line(Cam(cc).H, Cam(current_cam).H,Cam(cc).K\[phi;1]);
+        lines = [lines;l];
+    end
+    b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame +1,:);
+    if size(lines,1)>=2
+       kc = Cam(current_cam).kc;
+%        if pt ==1 
+%            points = [];
+%            for ll = 1:size(lines,1)
+%                p = lines(ll,3:4)';
+%                r = norm(p);
+%                xd = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*p+[2*kc(3)*p(1)*p(2)+ kc(4)*(r^2+2*p(1)^2);2*kc(4)*p(1)*p(2)+kc(3)*(r^2+2*p(2)^2)];
+%                points = [points,[eye(2),zeros(2,1)]*Cam(current_cam).K*[xd;1]];
+%            end
+%            quiver(handles.current_image,points(1,:)'-b_box(1)+bbox_delta,points(2,:)'-b_box(2)+bbox_delta,lines(:,1),lines(:,2),'m')
+%            for ll = 1:size(lines,1)
+%                text(points(1,:)'-b_box(1)+bbox_delta,points(2,:)'-b_box(2)+bbox_delta,num2str(cc))
+%            end
+%        end
+       p = nearest2lines(lines);
+       r = norm(p);
+       
+       xd = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*p+[2*kc(3)*p(1)*p(2)+ kc(4)*(r^2+2*p(1)^2);2*kc(4)*p(1)*p(2)+kc(3)*(r^2+2*p(2)^2)];
+       point =[eye(2),zeros(2,1)]*Cam(current_cam).K*[xd;1];
+       feat_cands(:,pt) = point;
+    else
+       feat_cands(:,pt) = [NaN;NaN];
+    end
+    
+    h = plot(handles.current_image,feat_cands(1,pt)-b_box(1)+bbox_delta,feat_cands(2,pt)-b_box(2)+bbox_delta,'*y') ;
+    
+    set(h, 'HitTest', 'off');
+    h = text(feat_cands(1,pt)-b_box(1)+bbox_delta,feat_cands(2,pt)-b_box(2)+bbox_delta,num2str(pt),'color', 'y') ;
+    set(h, 'HitTest', 'off');
+end
+
+%find closest point

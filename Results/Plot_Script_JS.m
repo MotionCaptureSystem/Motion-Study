@@ -10,7 +10,7 @@ nsteps = size(features,2);
 figure
 hold on
 cnt = 0;
-for pp = pts
+for pp = 1:length(pts)
     cnt = cnt+1;
     feat_manip = 1000*YPRTransform([0,-15/180*pi,-5/180*pi],[.300,1.200,.400])*[0,1,0,0;0,0,1,0;1,0,0,0;0,0,0,1]'*[features(3*(pp-1)+1:3*pp,:);ones(1,size(features,2))];
     plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors2(cnt,:))

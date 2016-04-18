@@ -7,8 +7,8 @@ function x = nearest2lines(lines)
 
 n_lines = size(lines,1);
 %units = lines(:,3:4);
-units = ([0,-1;1,0]*lines(:,3:4)')';
-pts = lines(:,1:2);
+units = ([0,-1;1,0]*lines(:,1:2)')';
+pts = lines(:,3:4);
 
 A = zeros(2,2);
 B = zeros(2,1);
