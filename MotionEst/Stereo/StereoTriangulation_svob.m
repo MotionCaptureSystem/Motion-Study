@@ -1,13 +1,14 @@
 function stereostruct = StereoTriangulation_svob(camstruct, options)
-ncam      = length(options.stereo.cams);
-cams      = options.stereo.cams;
-npts      = length(options.stereo.pts);
-pts       = options.stereo.pts;
-timesteps = options.stereo.tstart:options.stereo.dt:options.stereo.tstop;
-nsteps    = length(timesteps);
-linestyle1 = {options.plot.linestyle1{:},options.plot.linestyle1{:},options.plot.linestyle1{:}};
-plot_start = options.stereo.tstart;
-fs_c = options.fs_c;
+ncam        = length(options.stereo.cams);
+cams        = options.stereo.cams;
+npts        = length(options.stereo.pts);
+pts         = options.stereo.pts;
+timesteps   = options.stereo.tstart:options.stereo.dt:options.stereo.tstop;
+nsteps      = length(timesteps);
+linestyle1  = {options.plot.linestyle1{:},options.plot.linestyle1{:},options.plot.linestyle1{:}};
+colors      = options.plot.colors;
+plot_start  = options.stereo.tstart;
+fs_c        = options.fs_c;
 %% Perform Stereo Triangulation for Comparision
 npair = 0;
 pair_list = [];
@@ -42,7 +43,7 @@ for pair = 1:npair
     if ~isempty(stereostruct(pair).pts)
         for pp = 1:npts
             %plot3(stereostruct(pair).pts(1,options.ba_tsteps,pts(pp))', stereostruct(pair).pts(2,options.ba_tsteps,pts(pp))', stereostruct(pair).pts(3,options.ba_tsteps,pts(pp))','.r')
-            plot3(stereostruct(pair).pts(1,:,pts(pp))', stereostruct(pair).pts(2,:,pts(pp))', stereostruct(pair).pts(3,:,pts(pp))',linestyle1{pp})
+            plot3(stereostruct(pair).pts(1,:,pts(pp))', stereostruct(pair).pts(2,:,pts(pp))', stereostruct(pair).pts(3,:,pts(pp))','-.', 'color',colors(pp,:))
         end
     end
 end

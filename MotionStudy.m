@@ -606,9 +606,9 @@ handles.options.stereo.pts = input('Which POINTS should be used for stereo trian
 handles.options.stereo.tstart = input('What START time should be used for stereo triangulation:');
 handles.options.stereo.tstop = input('What STOP time should be used for stereo triangulation:');
 handles.options.stereo.dt = input('Plot every ?TH frame:');
-handles.options.plot.linestyle1 = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g'};
-handles.options.plot.linestyle2 = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
-handles.options.plot.linestyle3 = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
+%handles.options.plot.linestyle1 = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g'};
+handles.options.plot.colors     = hsv(length(handles.options.stereo.pts));
+%handles.options.plot.linestyle3 = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
 
 handles.Stereo = StereoTriangulation_svob(handles.Cam, handles.options);
 guidata(hObject, handles);
