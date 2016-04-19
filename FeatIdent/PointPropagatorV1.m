@@ -155,6 +155,7 @@ end
 if ~isfield(handles.Cam(current_cam),'frame')
     handles.Cam(current_cam).frame = [];
 end
+
 if isempty(handles.Cam(current_cam).frame)
     cam_str = num2str(current_cam);
     while length(cam_str)<3
@@ -766,12 +767,14 @@ set(handles.current_image,'NextPlot', 'Add');  %add the lines to the current plo
 no_sync = [];
 fs_c = handles.options.fs_c;
 
-%find available points for prediction in this view (pts seen in at
-%least two other cameras
+%find available points for prediction in this view (pts seen in at 
+%least two other cameras)
 pts_avail_mat = [];
 ncams = 0;
 cams_left = [];
 max_pt = 0;
+plot_obj = [];
+txt_obj = [];
 for cc = cams
     p_r{cc == cams} = [];
     
@@ -798,7 +801,7 @@ for cc = cams
     if tt<1 || tt>length(Cam(cc).pts) %|| pt>size(Cam(cc).pts,3)
         continue;
     end
-
+    
     if Cam(cc).sync_del
         dt_wi = 1 - (Cam(cc).sync_del*fs_c-floor(Cam(cc).sync_del*fs_c));
     else
@@ -850,9 +853,9 @@ for cc = cams
     end
 end
 
-pts2est = find(sum(pts_avail_mat)>=2);
-%pts_projectable = find(sum(pts_avail_mat) >= 2);
-%pts_avail_mat   = pts_avail_mat(:,pts_projectable);
+pts2est  = find(sum(pts_avail_mat)>=2);
+pts_have = find(~isnan(sum(squeeze(Cam(current_cam).pts(:,timestep - Cam(current_cam).start_frame+1,:)),1)));
+pts2est = setdiff(pts2est,pts_have);
 
 for pt = pts2est
     lines = [];
@@ -870,34 +873,49 @@ for pt = pts2est
     b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame +1,:);
     if size(lines,1)>=2
        kc = Cam(current_cam).kc;
-%        if pt ==1 
-%            points = [];
-%            for ll = 1:size(lines,1)
-%                p = lines(ll,3:4)';
-%                r = norm(p);
-%                xd = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*p+[2*kc(3)*p(1)*p(2)+ kc(4)*(r^2+2*p(1)^2);2*kc(4)*p(1)*p(2)+kc(3)*(r^2+2*p(2)^2)];
-%                points = [points,[eye(2),zeros(2,1)]*Cam(current_cam).K*[xd;1]];
-%            end
-%            quiver(handles.current_image,points(1,:)'-b_box(1)+bbox_delta,points(2,:)'-b_box(2)+bbox_delta,lines(:,1),lines(:,2),'m')
-%            for ll = 1:size(lines,1)
-%                text(points(1,:)'-b_box(1)+bbox_delta,points(2,:)'-b_box(2)+bbox_delta,num2str(cc))
-%            end
-%        end
+
        p = nearest2lines(lines);
        r = norm(p);
        
        xd = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*p+[2*kc(3)*p(1)*p(2)+ kc(4)*(r^2+2*p(1)^2);2*kc(4)*p(1)*p(2)+kc(3)*(r^2+2*p(2)^2)];
        point =[eye(2),zeros(2,1)]*Cam(current_cam).K*[xd;1];
-       feat_cands(:,pt) = point;
+       ncands = size(Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location,1);
+       delta = Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location - repmat(point',ncands,1);
+       dist = sum(delta.^2,2);
+       [val,pt_num] = min(dist);
+       if val<10^2
+           feat_cands(:,pt) = Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location(pt_num,:)';
+       else
+           feat_cands(:,pt) = [NaN;NaN];
+       end
     else
        feat_cands(:,pt) = [NaN;NaN];
     end
-    
-    h = plot(handles.current_image,feat_cands(1,pt)-b_box(1)+bbox_delta,feat_cands(2,pt)-b_box(2)+bbox_delta,'*y') ;
-    
-    set(h, 'HitTest', 'off');
-    h = text(feat_cands(1,pt)-b_box(1)+bbox_delta,feat_cands(2,pt)-b_box(2)+bbox_delta,num2str(pt),'color', 'y') ;
-    set(h, 'HitTest', 'off');
+    h2 = text(double(feat_cands(1,pt)'-b_box(1)+bbox_delta),double(feat_cands(2,pt)'-b_box(2)+bbox_delta),num2str(pt),'color', 'y');
+    txt_obj = [txt_obj, h2];
+    set(h2, 'HitTest', 'off');
 end
+
+%plot all identified features to debug
+%plot(handles.current_image,Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location(:,1)'-b_box(1)+bbox_delta,Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location(:,2)'-b_box(2)+bbox_delta, 'om')
+h1 = plot(handles.current_image,feat_cands(1,pts2est)'-b_box(1)+bbox_delta,feat_cands(2,pts2est)'-b_box(2)+bbox_delta,'*y') ;
+plot_obj = [plot_obj, h1];
+set(h1, 'HitTest', 'off');
+
+%Prompt the user which points should be kept and store them in the 
+pts_usr = input('Which points would you like to keep?:');
+for pp = pts_usr
+    Cam(current_cam).pts(:,timestep - Cam(current_cam).start_frame+1,pp) = feat_cands(:,pp);
+end    
+
+%delete the predicted points, and plot all points again.
+if ~isempty(pts_usr)
+    delete(plot_obj)
+end
+delete(txt_obj)
+handles.Cam = Cam;
+plot_points(hObject, handles);
+guidata(hObject, handles)
+
 
 %find closest point
