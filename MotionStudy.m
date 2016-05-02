@@ -22,7 +22,7 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 17-Feb-2016 11:52:15
+% Last Modified by GUIDE v2.5 02-May-2016 12:11:20
 
 % Begin initialization code - DO NOT EDIT
 addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
@@ -76,6 +76,7 @@ handles.Cam(1).frame = [];
 handles.options.working = pwd;
 handles.options.fs_c = 119.88;
 handles.options.fs_a = 48000;
+handles.options.ucs_size = 0.1;
 %add subdirectories
 
 %store defualt data directory 
@@ -396,7 +397,14 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
             fprintf('Loading EstStruct.mat ... \n')
             load([handles.options.path,filesep,'EstStruct.mat'])
             if exist('options','var')
-                handles.options = options;
+                optionsNew = options;
+                names = fieldnames(handles.options);
+                for nn = 1:length(names)
+                    if ~isfield(optionsNew,names{nn})
+                        optionsNew.(names{nn}) = eval(['handles.options.',names{nn}]);
+                    end
+                end
+                handles.options = optionsNew;
             end
             if exist('kinc','var')
                 EstStruct.kinc = kinc;
@@ -674,7 +682,7 @@ function scale_extrinsics_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 scale = input('By what factor would you like to scale extrinsics?:');
-
+handles.options.ucs_size = handles.options.ucs_size*scale;
 for cc = 1:length(handles.Cam)
     if ~isempty(handles.Cam(cc).H)
         handles.Cam(cc).H(1:3,4) = handles.Cam(cc).H(1:3,4)*scale;
@@ -866,3 +874,32 @@ function estimator_Callback(hObject, eventdata, handles)
 [handles.EstStruct, options] = traj_estimation(handles.options);
 
 guidata(hObject, handles);
+
+
+% --------------------------------------------------------------------
+function rotate_extrinsics_Callback(hObject, eventdata, handles)
+% hObject    handle to rotate_extrinsics (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+yprs = input('enter the Yaw-Pitch-Roll rotations to transform extrinsics:');
+Hmod = YPRTransform(yprs,zeros(size(yprs)));
+for cc = 1:length(handles.Cam)
+    if ~isempty(handles.Cam(cc).H)
+        handles.Cam(cc).H = Hmod*handles.Cam(cc).H;
+    end
+end
+guidata(hObject,handles)
+
+% --------------------------------------------------------------------
+function translate_extrinsics_Callback(hObject, eventdata, handles)
+% hObject    handle to translate_extrinsics (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+trans = input('enter the Yaw-Pitch-Roll rotations to transform extrinsics:');
+Hmod = YPRTransform(zeros(size(trans)),trans);
+for cc = 1:length(handles.Cam)
+    if ~isempty(handles.Cam(cc).H)
+        handles.Cam(cc).H = Hmod*handles.Cam(cc).H;
+    end
+end
+guidata(hObject,handles)

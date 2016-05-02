@@ -49,7 +49,7 @@ for pair = 1:npair
 end
 %legend('PT 2 Cams 1 and 2', 'PT 2 Cams 1 and 3', 'PT 2 Cams 2 and 3')
 H = reshape([camstruct(cams).H],4,4,[]);
-CFPlot(H, 0.1)
+CFPlot(H, options.ucs_size)
 axis equal
 set(gca, 'FontSize', 16, 'CameraPosition', [0, 0, 0])
 xlabel('x (mm)', 'FontSize', 16)
