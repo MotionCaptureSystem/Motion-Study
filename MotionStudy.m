@@ -200,8 +200,13 @@ for ii = 1:nframe-1
     kk = kk+1;
     frame=read(Video,ii);                       %read the frame
     name=strcat(dirname,filesep,num2str(kk),'.', im_type);
+    
     while length(name)<7
         name = strcat('0',name);
+    end
+    if strcmp(name,[dirname,filesep,'1.png'])
+        imwrite(frame,name);
+        name = [dirname,filesep,'bkgnd.png'];
     end
     imwrite(frame,name);
     waitbar(kk/nframe,wbhandle,['Delacing ',filename,'...',sprintf('%3.1f',kk*100/nframe),'%']);
@@ -440,7 +445,7 @@ function bw_mask_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.Cam = Get_bwbat(handles.Cam,handles.options);
+handles.Cam = Bwbat(handles.Cam,handles.options);
 guidata(hObject, handles);
 
 
