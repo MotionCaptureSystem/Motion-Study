@@ -22,17 +22,17 @@ datadir = options.path;
 
 CamNo = options.cams;
   % Last frame you want to process
-cam = input('Enter the CAMERA number you wish to track a point in: ');
+cam = input('Enter the CAMERA numbers you wish to track a point in: ');
 
 for cc = cam
-    SFrameNo=input('Enter the FIRST frame you want to process? Enter = first frame: ');
-    EFrameNo=input('Enter the LAST frame you want to process? Enter = last frame: ');
-    if isempty(SFrameNo)
-        SFrameNo=Cam(cc).start_frame; % First frame you want to process
-    end
-    if isempty(EFrameNo)
-        EFrameNo=Cam(cc).end_frame;
-    end
+    SFrameNo=Cam(cc).start_frame;
+    EFrameNo=Cam(cc).end_frame;
+%     if isempty(SFrameNo)
+%         SFrameNo=Cam(cc).start_frame; % First frame you want to process
+%     end
+%     if isempty(EFrameNo)
+%         EFrameNo=Cam(cc).end_frame;
+%     end
     cam_str = num2str(cc);
     while length(cam_str)<3
         cam_str = ['0',cam_str];

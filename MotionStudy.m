@@ -131,7 +131,7 @@ function im_proc_menu_Callback(hObject, eventdata, handles)
 
 
 % --------------------------------------------------------------------
-function feat_ident_menu_Callback(hObject, eventdata, handles)
+function feat_ident_menu_Callback(~, eventdata, handles)
 % hObject    handle to feat_ident_menu (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
@@ -171,12 +171,12 @@ fprintf('The following cams are available for delacing:\n')
 for cc = 1:length(cam_fold)
     cams(cc) = str2double(cam_fold(cc).name(4:6));
     fprintf('%d, ',cams(cc))
-%     if round(cc/5) ~= cc/5
-%         fprintf('\n')
-%     end
 end
 fprintf('\b\b\n')
-cams2delace = input('Which Cams would you like to delace?:');
+cams2delace = input('Which Cams would you like to delace? [enter = all]:');
+if isempty(cams2delace)
+    cams2delace = cams;
+end
 
 for cc = 1:length(cams2delace)
     fprintf('Delacing Camera %d Video...\n',cams2delace(cc))
@@ -191,25 +191,25 @@ function vid_slice(dirname,filename, im_type)
 %VID_SLICE          -Slices the video in FILENAME into individual images of
 % filetype TYPE.
 
-Video = VideoReader([dirname,filesep,filename]);%Read the video file
-nframe = Video.NumberOfFrames;                  %Determine the number of frames
-kk = 0;
+Video = VideoReader([dirname,filesep,filename]);  %Read the video file
+nframe = 19000;%Video.NumberOfFrames;             %Determine the number of frames
+%kk = 0;
 wbhandle = waitbar(0,['Delacing ',filename,'...']);
+for ii = 1000:5:19000%nframe-1
 
-for ii = 1:nframe-1
-    kk = kk+1;
+   %kk = kk+10;
     frame=read(Video,ii);                       %read the frame
-    name=strcat(dirname,filesep,num2str(kk),'.', im_type);
+    name=strcat(dirname,filesep,num2str(ii),'.', im_type);
     
-    while length(name)<7
-        name = strcat('0',name);
-    end
     if strcmp(name,[dirname,filesep,'1.png'])
         imwrite(frame,name);
         name = [dirname,filesep,'bkgnd.png'];
     end
+    if ii == 1
+        imwrite(frame,[dirname,filesep,'bkgnd.png'])
+    end
     imwrite(frame,name);
-    waitbar(kk/nframe,wbhandle,['Delacing ',filename,'...',sprintf('%3.1f',kk*100/nframe),'%']);
+    waitbar(ii/nframe,wbhandle,['Delacing ',filename,'...',sprintf('%3.1f',ii*100/nframe),'%']);
 end
 delete(wbhandle);
 
