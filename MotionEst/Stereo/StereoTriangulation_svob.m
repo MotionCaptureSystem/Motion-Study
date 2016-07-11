@@ -10,6 +10,7 @@ colors      = options.plot.colors;
 plot_start  = options.stereo.tstart;
 fs_c        = options.fs_c;
 %% Perform Stereo Triangulation for Comparision
+%form a list of camera pairs
 npair = 0;
 pair_list = [];
 for ii = 1:ncam-1
@@ -22,18 +23,32 @@ end
 %Determine stereo reconstructions of each pair of cams with new extrinsics
 stereostruct = struct([]);
 for pair = [1:npair]
-    for pp = 1:npts
+    camstruct1 = camstruct(pair_list(pair,1));
+    camstruct2 = camstruct(pair_list(pair,2));
+    %determine which points are avialable in these cameras
+    npts_loop = npts;
+    if size(camstruct1.pts_sync,3) < npts_loop
+        %if not all points are avialable in this camera, reduce the number
+        %of triangulations. 
+        npts_loop = size(camstruct1.pts_sync,3);
+    end
+    if size(camstruct2.pts_sync,3) < npts_loop
+        %if not all points are avialable in this camera, reduce the number
+        %of triangulations. 
+        npts_loop = size(camstruct2.pts_sync,3);
+    end
+    for pp = 1:npts_loop
         for kk = 1:nsteps
             %if ~isempty(intersect(pp,camstruct(pair_list(pair,1)).idin(1,pp))) && ~isempty(intersect(pp,camstruct(pair_list(pair,2)).idin(1,pp)))
-                camstruct1 = camstruct(pair_list(pair,1));
-                camstruct2 = camstruct(pair_list(pair,2));
                 stereostruct(pair).pts(:,kk,pts(pp)) = stertridet2(camstruct1.pts_sync(:,timesteps(kk)-camstruct1.start_frame+1+floor(camstruct1.sync_del*fs_c),pts(pp)), ...
                                                    camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs_c),pts(pp)), ...
                                                    camstruct1,camstruct2);
-            
-            stereostruct(pair).cams = pair_list(pair,:);
         end
     end
+    if size(stereostruct(pair).pts,3) < npts
+        stereostruct(pair).pts(:,:,npts_loop+1:npts) = NaN*ones(3,nsteps,npts-npts_loop);
+    end
+    stereostruct(pair).cams = pair_list(pair,:);
 end
 
 %% Plot Stereo Triangulations Using Different Pairs of Cameras

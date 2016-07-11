@@ -167,7 +167,7 @@ if isempty(handles.Cam(current_cam).frame)
     handles.Cam(current_cam).nframes = end_frame - start_frame + 1;
     handles.Cam(current_cam).rot_img = 0;
     if isempty(handles.Cam(current_cam).pts)
-        handles.Cam(current_cam).pts = NaN*ones(2,nframes);
+        handles.Cam(current_cam).pts = NaN*ones(2,handles.Cam(current_cam).nframes);
     end
 end
 
@@ -496,8 +496,8 @@ if proj_epi
                 end
 
                 %remove distortion from the points
-                p1_r = rm_distortion(pt1,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
-                p2_r = rm_distortion(pt2,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);
+                p1_r = rm_distortion(pt1,Cam(cc).K_dist,Cam(cc).fc_dist,Cam(cc).cc_dist,Cam(cc).alpha_c_dist,Cam(cc).kc_dist);%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
+                p2_r = rm_distortion(pt2,Cam(cc).K_dist,Cam(cc).fc_dist,Cam(cc).cc_dist,Cam(cc).alpha_c_dist,Cam(cc).kc_dist);
                 %interpolate the point in undist pix coords
                 if dt_ci < 0 
                     p_r = p1_r + (p2_r - p1_r)*(1+dt_ci);
@@ -511,12 +511,12 @@ if proj_epi
                 b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:); %determine the bounding box
                 pts_bbox = [b_box(1:2)', b_box(1:2)' + b_box(3:4)';ones(1,2)];
                 
-                pts_bbox_ud(:,1) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,1),Cam(current_cam).K,Cam(current_cam).fc,Cam(current_cam).cc,Cam(current_cam).alpha_c,Cam(current_cam).kc);1];%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
-                pts_bbox_ud(:,2) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,2),Cam(current_cam).K,Cam(current_cam).fc,Cam(current_cam).cc,Cam(current_cam).alpha_c,Cam(current_cam).kc);1];
+                pts_bbox_ud(:,1) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,1),Cam(current_cam).K_dist,Cam(current_cam).fc_dist,Cam(current_cam).cc_dist,Cam(current_cam).alpha_c_dist,Cam(current_cam).kc_dist);1];%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
+                pts_bbox_ud(:,2) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,2),Cam(current_cam).K_dist,Cam(current_cam).fc_dist,Cam(current_cam).cc_dist,Cam(current_cam).alpha_c_dist,Cam(current_cam).kc_dist);1];
                 x = linspace(pts_bbox_ud(1,1),pts_bbox_ud(1,2),300);  %define x retinal coords for line
                 y = epi_line(2)/epi_line(1)*(x-epi_line(3))+epi_line(4);       %compute y retinal coords for line
                 x_n = [x;y];                         %combine x and y into points
-                kc = Cam(current_cam).kc;               %distort points
+                kc = Cam(current_cam).kc_dist;               %distort points
                 xd = [zeros(2,size(x_n,2));ones(1,size(x_n,2))]; %create place holder for distorted points
                 for pp = 1:size(x_n,2)  %compute the distortions
                     pt_n = x_n(:,pp);
@@ -831,8 +831,8 @@ for cc = cams
         end
 
         %remove distortion from the points
-        p1_r = rm_distortion(pt1,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
-        p2_r = rm_distortion(pt2,Cam(cc).K,Cam(cc).fc,Cam(cc).cc,Cam(cc).alpha_c,Cam(cc).kc);
+        p1_r = rm_distortion(pt1,Cam(cc).K_dist,Cam(cc).fc_dist,Cam(cc).cc_dist,Cam(cc).alpha_c_dist,Cam(cc).kc_dist);%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
+        p2_r = rm_distortion(pt2,Cam(cc).K_dist,Cam(cc).fc_dist,Cam(cc).cc_dist,Cam(cc).alpha_c_dist,Cam(cc).kc_dist);
         %interpolate the point in undist pix coords
         if dt_ci < 0 
             p_r{cams == cc}(:,pt) = p1_r + (p2_r - p1_r)*(1+dt_ci);
@@ -872,13 +872,13 @@ for pt = pts2est
     end
     b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame +1,:);
     if size(lines,1)>=2
-       kc = Cam(current_cam).kc;
+       kc = Cam(current_cam).kc_dist;
 
-       p = nearest2lines(lines);
+       p = [eye(2),zeros(2,1)]*(Cam(cc).K_dist\Cam(cc).K*[nearest2lines(lines);1]);
        r = norm(p);
        
        xd = (1+kc(1)*r^2+kc(2)*r^4+kc(5)*r^6)*p+[2*kc(3)*p(1)*p(2)+ kc(4)*(r^2+2*p(1)^2);2*kc(4)*p(1)*p(2)+kc(3)*(r^2+2*p(2)^2)];
-       point =[eye(2),zeros(2,1)]*Cam(current_cam).K*[xd;1];
+       point =[eye(2),zeros(2,1)]*Cam(current_cam).K_dist*[xd;1];
        ncands = size(Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location,1);
        delta = Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location - repmat(point',ncands,1);
        dist = sum(delta.^2,2);

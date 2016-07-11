@@ -31,7 +31,7 @@
 fprintf('Creating Kinematic Definition...\n')
 % Node Names and Parent-Child Info
 %             Node Name   Parent    Child       Connecting Point       Group   ID Kernal  
-NodeNames   = {'BB'       ,   [] ,    [],             [],                1,      'YPR';
+NodeNames   = {'BB'       ,   [] ,    [2],             [],                1,      'YPR';
                'LHum'     ,   [1],    [3],            [3],               2,      'DH';
                'LRad'     ,   [2],    [4]             [2],               2,      'DH'};
 %                'LWrist'   ,   [3],    [5,6,7],        [3],               3,      'DH';

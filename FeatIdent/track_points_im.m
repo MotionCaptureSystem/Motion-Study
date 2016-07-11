@@ -271,8 +271,8 @@ for pp = 1:nstates/2
         y = NaN*ones(length(x),1);
     else
         locs = camstruct.features{ff}.Location;
-        inds = find(camstruct.features{ff}.SignOfLaplacian>0);
-        locs(inds,:) = []; 
+        %inds = find(camstruct.features{ff}.SignOfLaplacian>0);
+        %locs(inds,:) = []; 
         dist = (locs'-repmat(x(2*pp-1:2*pp,1),1,size(locs,1)));
         delta = sum(dist.*dist,1);
         [val,I] = min(delta);

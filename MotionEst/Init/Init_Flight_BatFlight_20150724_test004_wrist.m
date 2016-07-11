@@ -9,7 +9,7 @@ options.tstop           = 425;                  %Useable timestep will be tstart
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
 
 options.plotflag        = 0;
-options.path            = 'C:\ShandongData2015\Batflight_07242015\Test004';
+%options.path            = 'C:\ShandongData2015\Batflight_07242015\Test004';
 options.default_dir     = pwd;
 options.fs              = options.fs_c;
 
@@ -18,7 +18,7 @@ options.est.cams        = [301,302,303,310,312,318,320,325,333];
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
-options.est.state_init      = [-1.093,-0.2433,-0.2678,90*pi/180,-100*pi/180,180*pi/180,...%]';%,...
+options.est.state_init      = [360,1074,-307,90*pi/180,-100*pi/180,-90*pi/180,...%]';%,...
                                 -270*pi/180,-pi/2,-60*pi/180,...
                                 30/180*pi...
                                 -75*pi/180,...

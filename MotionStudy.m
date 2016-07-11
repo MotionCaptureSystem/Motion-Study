@@ -178,7 +178,7 @@ if isempty(cams2delace)
     cams2delace = cams;
 end
 
-for cc = 1:length(cams2delace)
+parfor cc = 1:length(cams2delace)
     fprintf('Delacing Camera %d Video...\n',cams2delace(cc))
     cam_num = num2str(cams2delace(cc));
     while length(cam_num)<3
@@ -187,31 +187,26 @@ for cc = 1:length(cams2delace)
     vid_slice([handles.options.path,filesep,'Cam',cam_num],['cam',cam_num,'.MP4'],'png')
 end
 
+
 function vid_slice(dirname,filename, im_type)
 %VID_SLICE          -Slices the video in FILENAME into individual images of
 % filetype TYPE.
 
 Video = VideoReader([dirname,filesep,filename]);  %Read the video file
-nframe = 19000;%Video.NumberOfFrames;             %Determine the number of frames
+nframe = Video.NumberOfFrames;             %Determine the number of frames
 %kk = 0;
-wbhandle = waitbar(0,['Delacing ',filename,'...']);
-for ii = 1000:5:19000%nframe-1
-
-   %kk = kk+10;
-    frame=read(Video,ii);                       %read the frame
-    name=strcat(dirname,filesep,num2str(ii),'.', im_type);
-    
-    if strcmp(name,[dirname,filesep,'1.png'])
-        imwrite(frame,name);
-        name = [dirname,filesep,'bkgnd.png'];
-    end
-    if ii == 1
+%wbhandle = waitbar(0,['Delacing ',filename,'...']);
+for ff = 1
+    %kk = kk+10;
+    frame=read(Video,ff);                       %read the frame
+    name=strcat(dirname,filesep,num2str(ff),'.', im_type);
+    %imwrite(frame,name);
+    if ff == 1
         imwrite(frame,[dirname,filesep,'bkgnd.png'])
     end
-    imwrite(frame,name);
-    waitbar(ii/nframe,wbhandle,['Delacing ',filename,'...',sprintf('%3.1f',ii*100/nframe),'%']);
+    %waitbar(ii/nframe,wbhandle,['Delacing ',filename,'...',sprintf('%3.1f',ii*100/nframe),'%']);
 end
-delete(wbhandle);
+%delete(wbhandle);
 
 
 % --------------------------------------------------------------------
@@ -249,8 +244,8 @@ function surf_ident_Callback(hObject, eventdata, handles)
 % hObject    handle to surf_ident (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-h = fspecial('gaussian',[7,7]);
-scale = 6;
+
+scale = 3;
 for cc = handles.options.cams
     if ~isfield(handles.Cam(cc), 'features')
         handles.Cam(cc).features = []; 
@@ -265,34 +260,46 @@ for cc = handles.options.cams
     end
     images = dir([handles.options.path,filesep,'Cam', num2str(cc), filesep, '*.png']);
     for ii = 1:length(images)-1
-        if ~isnan(handles.Cam(cc).b_box(ii,:)) && ~handles.Cam(cc).b_box(ii,:)==0
+        if ~isnan(handles.Cam(cc).b_box(ii,:)) & ~handles.Cam(cc).b_box(ii,:)==0
         %get previously computed region of interest
         xc = handles.Cam(cc).b_box(ii,1);
         yc = handles.Cam(cc).b_box(ii,2);
         xw = handles.Cam(cc).b_box(ii,3);
         yw = handles.Cam(cc).b_box(ii,4);
+
         %read the image
         img = imread( [handles.options.path,filesep,'Cam', num2str(cc), filesep, images(ii).name]);
+        if xc+xw > size(img,2)
+            xw = size(img,2)-xc;
+        end
+        if yc+yw > size(img,1)
+            yw = size(img,1)-yc;
+        end
         %contrast adjust the image
-        imgFilt=imadjust(img(yc:yc+yw,xc:xc+xw,:),[0 0 0; 0.1 0.1 0.1],[]);
+        %imgFilt=imadjust(img(yc:yc+yw,xc:xc+xw,:),[0 0 0; 0.1 0.1 0.1],[]);
         %convert the color image to grayscale
-        imgFilt=rgb2gray(imgFilt);
+        imgFilt=rgb2gray(img(yc:yc+yw,xc:xc+xw,:));
         %enlarge the image
         imgFilt=imresize(imgFilt,scale);
         %filter the image
-        G=fspecial('gaussian',[10 10],3);
+        G=fspecial('gaussian',[39 39],0.1);
         imgFilt = imfilter(imgFilt,G,'same');
         %find the surf features
-        points=detectSURFFeatures(imgFilt,'MetricThreshold',400,'NumScaleLevels',6);
-        %featpoints=points.selectStrongest(600).Location;
-        %points = detectSURFFeatures(gray);
-        handles.Cam(cc).features{ii} = points.selectStrongest(200);
-        handles.Cam(cc).features{ii}.Location(:,1) = handles.Cam(cc).features{ii}.Location(:,1)/scale + xc;
-        handles.Cam(cc).features{ii}.Location(:,2) = handles.Cam(cc).features{ii}.Location(:,2)/scale + yc;
+        points=detectSURFFeatures(imgFilt,'MetricThreshold',1000,'NumScaleLevels',4,'NumOctaves', 5);
+        if ~isempty(points)
+            index = find(points.SignOfLaplacian<0);
+            feat =  points.selectStrongest(length(points));
+            handles.Cam(cc).features{ii} = feat(index,:);
+            handles.Cam(cc).features{ii}.Location(:,1) = handles.Cam(cc).features{ii}.Location(:,1)/scale + xc;
+            handles.Cam(cc).features{ii}.Location(:,2) = handles.Cam(cc).features{ii}.Location(:,2)/scale + yc;
+        else
+            handles.Cam(cc).features{ii}.Location(:,1) = NaN;
+            handles.Cam(cc).features{ii}.Location(:,2) = NaN;
+        end
         figure(1)
-        imshow(img)
+        imshow(imgFilt)
         hold on
-        plot(handles.Cam(cc).features{ii}.Location(:,1), handles.Cam(cc).features{ii}.Location(:,2),'+r')
+        plot(3*(handles.Cam(cc).features{ii}.Location(:,1)-xc), 3*(handles.Cam(cc).features{ii}.Location(:,2)-yc),'+r')
         hold off
         %pause
         guidata(hObject, handles);
@@ -336,6 +343,7 @@ try
 catch ME, 
     MStudyHandles = getappdata(0,'MStudyHands');
 end
+
 MStudyHandles = getappdata(0,'MStudyHands');
 handles.Cam = MStudyHandles.Cam;
 guidata(hObject, handles);
@@ -360,7 +368,7 @@ function extrinsic_svoboda_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 %%import all available calibration_menu parameters
-[handles.options, handles.Cam] = load_svoboda_cal3(handles.Cam, handles.options);
+[handles.options, handles.Cam] = load_svoboda_cal4(handles.Cam, handles.options);
 guidata(hObject,handles);
 
 
@@ -400,22 +408,23 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
         %if trajectory estimation has been performed, load that too
         if exist([handles.options.path,filesep,'EstStruct.mat'],'file')
             fprintf('Loading EstStruct.mat ... \n')
-            load([handles.options.path,filesep,'EstStruct.mat'])
-            if exist('options','var')
-                optionsNew = options;
+            loaded = load([handles.options.path,filesep,'EstStruct.mat']);
+            if isfield(loaded,'options')
+                optionsNew = loaded.options;
                 names = fieldnames(handles.options);
                 for nn = 1:length(names)
                     if ~isfield(optionsNew,names{nn})
                         optionsNew.(names{nn}) = eval(['handles.options.',names{nn}]);
                     end
                 end
+                optionsNew.path = handles.options.path;
                 handles.options = optionsNew;
             end
-            if exist('kinc','var')
-                EstStruct.kinc = kinc;
+            if isfield(loaded,'kinc')
+                EstStruct.kinc = loaded.kinc;
             end
-            if exist('ukf', 'var')
-                EstStruct.ukf = ukf;
+            if isfield(loaded, 'ukf')
+                EstStruct.ukf = loaded.ukf;
             end
             handles.EstStruct = EstStruct;
         end
@@ -579,16 +588,25 @@ function audio_sync_Callback(hObject, eventdata, handles)
 
 % determine the sync delay by reading the audio track of the video file_menu.
 
-if isfield(handles.Cam,'sync_del')
-    y = input('Sync Data Already Exists.  Do you want to recompute the delays?:','s');
-    if strcmp(y, 'y')
-        [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
+
+y = input('Were the cameras hardware synced? [Y/n]','s');
+if strcmpi(y,'y')
+    for ii = handles.options.cams
+        handles.Cam(ii).sync_del = 0;
+        handles.Cam(ii).pts_sync = handles.Cam(ii).pts_rect;
     end
 else
+    if isfield(handles.Cam,'sync_del')
+        y = input('Sync Data Already Exists.  Do you want to recompute the delays?:','s');
+        if strcmp(y, 'y')
+            [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
+        end
+    else
     [handles.options, handles.Cam] = audiosync(handles.Cam, handles.options);
-    
+    [handles.Cam] = subframe_sync(handles.Cam, handles.options);
+    end
 end
-[handles.Cam] = subframe_sync(handles.Cam, handles.options);
+
 % perform subframe synchronization of cameras (linear interp)
 
 guidata(hObject,handles);
@@ -647,8 +665,8 @@ for c = cams
         for kk = 1:size(handles.Cam(c).pts,2)
             %if the point is occluded the value will be NaN
             point = handles.Cam(c).pts(:,kk,pp);
-            point_ud = rm_distortion(point, handles.Cam(c).K, handles.Cam(c).fc,...
-                       handles.Cam(c).cc, handles.Cam(c).alpha_c, handles.Cam(c).kc);
+            point_ud = rm_distortion(point, handles.Cam(c).K_dist, handles.Cam(c).fc_dist,...
+                       handles.Cam(c).cc_dist, handles.Cam(c).alpha_c_dist, handles.Cam(c).kc_dist);
             handles.Cam(c).pts_rect(:,kk,pts(pt)) = point_ud;
         end
     end

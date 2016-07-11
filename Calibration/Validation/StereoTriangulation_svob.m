@@ -46,7 +46,8 @@ mean_p_cam  = zeros(3,nsteps,npts);
 dev_p_cam  = zeros(3,nsteps,npts);
 for cc = 1:ncam
     [pair_inds,~] = find(pair_list==cams(cc));
-    points_cam = reshape([stereostruct(pair_inds').pts],3,nsteps,npts,[]);
+    [I,~] = ind2sub(size(pair_list),pair_inds);
+    points_cam = reshape([stereostruct(I').pts],3,nsteps,npts,[]);
     mean_p_cam(:,:,:,cc) = nanmean(points_cam,4);
     dev_p_cam(:,:,:,cc)  = nanstd(points_cam-repmat(mean_p_cam(:,:,:,cc),1,1,1,length(pair_inds)),0,4);
 end
@@ -63,43 +64,24 @@ for pp = 1:npts
     end
     figure
     hold on
-%     plot([1:nsteps]',mean_p(1,:,pp)','-r',[1:nsteps]',(mean_p(1,:,pp)-dev(1,:,pp))','--r',[1:nsteps]',(mean_p(1,:,pp)+dev(1,:,pp))','--r');
-%     plot([1:nsteps]',mean_p(2,:,pp)','-b',[1:nsteps]',(mean_p(2,:,pp)-dev(2,:,pp))','--b',[1:nsteps]',(mean_p(2,:,pp)+dev(2,:,pp))','--b');
-%     plot([1:nsteps]',mean_p(3,:,pp)','-g',[1:nsteps]',(mean_p(3,:,pp)-dev(3,:,pp))','--g',[1:nsteps]',(mean_p(3,:,pp)+dev(3,:,pp))','--g');
-    plot([1:nsteps]',dev(1,:,pp)'*1500,'-r');
-    plot([1:nsteps]',dev(2,:,pp)'*1500,'-b');
-    plot([1:nsteps]',dev(3,:,pp)'*1500,'-g');
+    plot([1:nsteps]',mean_p(1,:,pp)','-r',[1:nsteps]',(mean_p(1,:,pp)-dev(1,:,pp))','--r',[1:nsteps]',(mean_p(1,:,pp)+dev(1,:,pp))','--r');
+    plot([1:nsteps]',mean_p(2,:,pp)','-b',[1:nsteps]',(mean_p(2,:,pp)-dev(2,:,pp))','--b',[1:nsteps]',(mean_p(2,:,pp)+dev(2,:,pp))','--b');
+    plot([1:nsteps]',mean_p(3,:,pp)','-g',[1:nsteps]',(mean_p(3,:,pp)-dev(3,:,pp))','--g',[1:nsteps]',(mean_p(3,:,pp)+dev(3,:,pp))','--g');
+    plot([1:nsteps]',dev(1,:,pp)','-r');
+    plot([1:nsteps]',dev(2,:,pp)','-b');
+    plot([1:nsteps]',dev(3,:,pp)','-g');
     set(gca,'FontSize',16)
     ylabel('STD Dev (mm)', 'FontSize', 16); xlabel('time (sample)','FontSize', 16); title(sprintf('Statistics of Stereo Triangulation Pt %d',pts(pp)),'FontSize',16);
     
     for cc = 1:ncam
         figure
         hold on
-        plot([1:nsteps]',dev_p_cam(1,:,pp,cc)'*1500,'-r');
-        plot([1:nsteps]',dev_p_cam(2,:,pp,cc)'*1500,'-b');
-        plot([1:nsteps]',dev_p_cam(3,:,pp,cc)'*1500,'-g');
+        plot([1:nsteps]',dev_p_cam(1,:,pp,cc)','-r');
+        plot([1:nsteps]',dev_p_cam(2,:,pp,cc)','-b');
+        plot([1:nsteps]',dev_p_cam(3,:,pp,cc)','-g');
         set(gca,'FontSize',16)
         ylabel('STD Dev (mm)', 'FontSize', 16); xlabel('time (sample)','FontSize', 16); title(sprintf('Statistics of Stereo Triangulation Pt %d Cam %d',pts(pp),cams(cc)),'FontSize',16);
     end
 end
 
 
-%% Plot Stereo Triangulations Using Different Pairs of Cameras
-figure
-hold on
-for pair = 1:length(stereostruct)
-    if ~isempty(stereostruct(pair).pts)
-        for pp = 1:npts
-            plot3(stereostruct(pair).pts(1,:,pts(pp))', stereostruct(pair).pts(2,:,pts(pp))', stereostruct(pair).pts(3,:,pts(pp))',options.plot.linestyle1{pair})
-        end
-    end
-end
-%legend('PT 2 Cams 1 and 2', 'PT 2 Cams 1 and 3', 'PT 2 Cams 2 and 3')
-H = reshape([camstruct.H],4,4,[]);
-CFPlot(H, 0.1)
-axis equal
-set(gca, 'FontSize', 16, 'CameraPosition', [0, 0, 0])
-xlabel('x (mm)', 'FontSize', 16)
-ylabel('y (mm)', 'FontSize', 16)
-zlabel('z (mm)', 'FontSize', 16)
-title ('Stereo Triangulation', 'FontSize', 18)

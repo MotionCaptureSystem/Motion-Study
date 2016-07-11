@@ -14,7 +14,7 @@ img = imread([direct,filesep,'Cam',cam_num,filesep,images(1).name]);
 
 hf=waitbar(0,['Computing Bounding Box For Cam ',cam_num,' ... ']);
 
-threshold =15.7; % get threshold
+threshold = 15.7; % get threshold
 rect = zeros(numFrames,4);     
 for p=1:numFrames-1;
     %%   get difference between two frames
