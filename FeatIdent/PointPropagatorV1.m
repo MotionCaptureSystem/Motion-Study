@@ -689,6 +689,8 @@ else
     set(handles.image_handle, 'Interruptible', 'on');
 end
 
+set(gcf,'ToolBar','figure')
+
 % --- Executes on button press in track_pts.
 function track_pts_Callback(hObject, eventdata, handles)
 % hObject    handle to track_pts (see GCBO)
