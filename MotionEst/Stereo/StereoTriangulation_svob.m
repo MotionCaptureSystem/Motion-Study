@@ -27,15 +27,33 @@ for pair = [1:npair]
     camstruct2 = camstruct(pair_list(pair,2));
     %determine which points are avialable in these cameras
     npts_loop = npts;
-    if size(camstruct1.pts_sync,3) < npts_loop
+    if size(camstruct1.pts_sync,3) < pts(npts_loop)
         %if not all points are avialable in this camera, reduce the number
         %of triangulations. 
-        npts_loop = size(camstruct1.pts_sync,3);
+        max_pt_num = max(pts(pts<=size(camstruct1.pts_sync,3)));
+        if isempty(max_pt_num)
+            continue
+        end
+        npts_loop = find(pts==max_pt_num);
     end
-    if size(camstruct2.pts_sync,3) < npts_loop
+    if npts_loop == 1
+        if isempty(camstruct1.pts_sync)
+            continue %npts_loop =0;
+        end
+    end
+    if size(camstruct2.pts_sync,3) < pts(npts_loop)
         %if not all points are avialable in this camera, reduce the number
         %of triangulations. 
-        npts_loop = size(camstruct2.pts_sync,3);
+        max_pt_num = max(pts(pts<=size(camstruct2.pts_sync,3)));
+        if isempty(max_pt_num)
+            continue
+        end
+        npts_loop = find(pts==max_pt_num);
+    end
+    if npts_loop == 1
+        if isempty(camstruct2.pts_sync)
+            continue %npts_loop =0;
+        end
     end
     for pp = 1:npts_loop
         for kk = 1:nsteps
@@ -58,7 +76,9 @@ for pair = 1:npair
     if ~isempty(stereostruct(pair).pts)
         for pp = 1:npts
             %plot3(stereostruct(pair).pts(1,options.ba_tsteps,pts(pp))', stereostruct(pair).pts(2,options.ba_tsteps,pts(pp))', stereostruct(pair).pts(3,options.ba_tsteps,pts(pp))','.r')
+            if size(stereostruct(pair).pts,3) >= pts(pp)
             plot3(stereostruct(pair).pts(1,:,pts(pp))', stereostruct(pair).pts(2,:,pts(pp))', stereostruct(pair).pts(3,:,pts(pp))','-.', 'color',colors(pp,:))
+            end
         end
     end
 end

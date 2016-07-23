@@ -22,10 +22,10 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 02-May-2016 12:11:20
+% Last Modified by GUIDE v2.5 16-Jul-2016 10:44:55
 
 % Begin initialization code - DO NOT EDIT
-addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results')
+addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results','PtsInfo')
 addpath(['.',filesep,'MotionEst',filesep,'Init'],...
         ['.',filesep,'MotionEst',filesep,'Models'],...
         ['.',filesep,'MotionEst',filesep,'Stereo'],...
@@ -82,6 +82,15 @@ handles.options.ucs_size = 0.1;
 %store defualt data directory 
 handles.options.path = ['.',filesep];
 handles.options.cams = [];
+
+%store the current timestep and camera number
+handles.options.current_cam=[];
+handles.options.current_timestep=[];
+
+%store the start time and end time
+fig1_child = get(handles.figure1,'Children');
+handles.options.bar_starttime=get(fig1_child(2),'String');
+handles.options.bar_endtime=get(fig1_child(1),'String');
 
 % Update handles structure
 guidata(hObject, handles);
@@ -196,7 +205,7 @@ Video = VideoReader([dirname,filesep,filename]);  %Read the video file
 nframe = Video.NumberOfFrames;             %Determine the number of frames
 %kk = 0;
 %wbhandle = waitbar(0,['Delacing ',filename,'...']);
-for ff = [2000:6:20760,20860:6:28800]
+for ff = [360:460]
     %kk = kk+10;
     frame=read(Video,ff);                       %read the frame
     name=strcat(dirname,filesep,num2str(ff),'.', im_type);
@@ -441,6 +450,15 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
             	continue;  %if start_frame is an empty matrix there was no data imported for that camera
             end
             handles.options.cams = [handles.options.cams, cc];
+        end
+        if isfield(Cam,'pts')
+        setappdata(0,'Cam', Cam);
+        %display the ToolBar of the figure
+        setappdata(0,'handles',handles)
+        set(handles.figure1,'ToolBar','figure')
+        if isfield(Cam,'sync_del')
+            BarGraph(handles);
+        end
         end
     end
 end
@@ -687,6 +705,7 @@ for cam = cams
     hold on
     for pp = pts
         %plot the distorted features
+        if size(handles.Cam(cam).pts,3)>=pp && ~isempty(handles.Cam(cam).pts)
         plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','+r');
         plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','-b');
         %plot the undistorted features
@@ -695,6 +714,7 @@ for cam = cams
 %         %plot the synchronized featured
 %         plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','^b');
 %         plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','-m');  
+        end
     end
     title(['Camera ',num2str(cam)]);
 end
@@ -770,50 +790,65 @@ function merge_proj_Callback(hObject, eventdata, handles)
 %prompt the user to select which file should be merged.
 [filename, pathname, ~] = uigetfile('*.mat');
 import_struct = load([pathname,filename]);
-
-%determine the number of cameras in the current project
- Cam = handles.Cam;
-% ncam = length(Cam);
 % determine the cameras that are being imported
 cams = [import_struct.cams(1):import_struct.cams(2)];
 ncam = length(cams);
 
+%Determine which Fields are in the current project
+Cam = handles.Cam;
 fields_orig = fieldnames(Cam); 
+fields_imp = fieldnames(import_struct.Cam); 
 %%IMPORT MISSING FIELDS OF DATA
 %for each camera in the current project, determine if there are missing
 %data that exist in the project being imported.
 fprintf('Finding data in the imported structure which is not contained in this project...\n')
-for c = 1:ncam
-    %get the camera number 
-    %determine which fields in this project are empty
-    orig_fields = structfun(@isempty, Cam(cams(c)));
-    %determine which fields in the imported structure are full
-    import_fields = ~structfun(@isempty, import_struct.Cam(c));
-    for ff = 1:length(fields_orig);
-        if iscell(Cam(cams(c)).(fields_orig{ff}))
-            if isempty(Cam(cams(c)).(fields_orig{ff}){1})
-                orig_fields(ff) = 0;
-            end
+% %determine which fields in this project are empty
+% orig_fields = structfun(@isempty, Cam(cams(c)));
+% %determine which fields in the imported structure are full
+% import_fields = ~structfun(@isempty, import_struct.Cam(c));
+
+%check each field in import struct, and make sure it is in original 
+for ii = 1:length(fields_imp)                       
+    if ~any(strcmp(fields_imp{ii},fields_orig))     %if this field is in the imported struct and not in original 
+        Cam(1).(fields_imp{ii}) = [];               %add place holder
+    end
+    for kk = 1:length(import_struct.Cam)            %for all imported cameras
+        if isempty(Cam(cams(kk)).(fields_imp{ii}))  %if that field is empty 
+            %import the data into this project
+            Cam(cams(kk)).(fields_imp{ii}) = import_struct.Cam(kk).(fields_imp{ii});
         end
     end
-    for ff = 1:length(fields_orig);
-        if iscell(Cam(cams(c)).(fields_orig{ff}))
-            if isempty(Cam(cams(c)).(fields_orig{ff}){1})
-                import_fields(ff) = 0;
-            end
-        end
-    end
-    %determine where the imported project has data and the current project
-    %doesn't
-    overlap = orig_fields & import_fields;
-    %for each field in the list, import what is missing in the current
-    %structure.
-    for ff = 1:length(fields_orig);
-        if overlap(ff)
-           Cam(cams(c)).(fields_orig{ff}) = import_struct.Cam(c).(fields_orig{ff});
-        end
-    end   
 end
+
+% for c = 1:ncam
+%     %get the camera number 
+%     fprintf('Importing From Cam %i...\n',cams(c))
+% 
+%     for ff = 1:length(fields_orig);
+%         if iscell(Cam(cams(c)).(fields_orig{ff}))
+%             if isempty(Cam(cams(c)).(fields_orig{ff}){1})
+%                 orig_fields(ff) = 0;
+%             end
+%         end
+%     end
+%     for ff = 1:length(fields_orig);
+%         if iscell(Cam(cams(c)).(fields_orig{ff}))
+%             if isempty(Cam(cams(c)).(fields_orig{ff}){1})
+%                 import_fields(ff) = 0;
+%             end
+%         end
+%     end
+%     %determine where the imported project has data and the current project
+%     %doesn't
+%     overlap = orig_fields & import_fields;
+%     %for each field in the list, import what is missing in the current
+%     %structure.
+%     for ff = 1:length(fields_orig);
+%         if overlap(ff)
+%            Cam(cams(c)).(fields_orig{ff}) = import_struct.Cam(c).(fields_orig{ff});
+%         end
+%     end   
+% end
 
 %%IMPORT MISSING POINTS
 for c = 1:ncam
@@ -931,3 +966,66 @@ for cc = 1:length(handles.Cam)
     end
 end
 guidata(hObject,handles)
+
+
+
+
+%<<<<<<< HEAD
+% --- Executes during object creation, after setting all properties.
+function axes1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to axes1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: place code in OpeningFcn to populate axes1
+
+function Start_time_Callback(hObject, eventdata, handles)
+% hObject    handle to Start_time (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of Start_time as text
+%        str2double(get(hObject,'String')) returns contents of Start_time as a double
+
+
+handles.options.bar_starttime=get(hObject,'String');
+
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function Start_time_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to Start_time (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function edit2_Callback(hObject, eventdata, handles)
+% hObject    handle to edit2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit2 as text
+%        str2double(get(hObject,'String')) returns contents of edit2 as a double
+handles.options.bar_endtime=get(hObject,'String');
+handles.options.bar_tottime=handles.options.bar_endtime-handles.options.bar_starttime+1;
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function edit2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+

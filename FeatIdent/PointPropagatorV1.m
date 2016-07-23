@@ -723,8 +723,9 @@ function delete_multi_Callback(hObject, eventdata, handles)
 cam = str2double(get(handles.current_cam,'String'));
 pt_nums = input('Which pts would you like to delete?:');
 timesteps = input('Which timesteps would you like to delete?:')- handles.Cam(cam).start_frame+1;
-
-handles.Cam(cam).pts(:,timesteps,pt_nums) = NaN*ones(2,length(timesteps),length(pt_nums));
+for pp = pt_nums
+    handles.Cam(cam).pts(:,timesteps,pp) = NaN*ones(2,length(timesteps));
+end
 plot_points(hObject, handles)
 guidata(hObject,handles);
 
