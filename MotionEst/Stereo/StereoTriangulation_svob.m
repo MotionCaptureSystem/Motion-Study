@@ -72,12 +72,12 @@ end
 %% Plot Stereo Triangulations Using Different Pairs of Cameras
 figure
 hold on
-for pair = 1:npair
+for pair = 1:length(stereostruct)
     if ~isempty(stereostruct(pair).pts)
         for pp = 1:npts
             %plot3(stereostruct(pair).pts(1,options.ba_tsteps,pts(pp))', stereostruct(pair).pts(2,options.ba_tsteps,pts(pp))', stereostruct(pair).pts(3,options.ba_tsteps,pts(pp))','.r')
             if size(stereostruct(pair).pts,3) >= pts(pp)
-            plot3(stereostruct(pair).pts(1,:,pts(pp))', stereostruct(pair).pts(2,:,pts(pp))', stereostruct(pair).pts(3,:,pts(pp))','-.', 'color',colors(pp,:))
+            plot3(stereostruct(pair).pts(1,:,pts(pp))', stereostruct(pair).pts(2,:,pts(pp))', stereostruct(pair).pts(3,:,pts(pp))','-', 'color',colors(pp,:),'LineWidth',2.0)
             end
         end
     end

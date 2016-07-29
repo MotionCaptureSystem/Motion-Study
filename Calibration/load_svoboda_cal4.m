@@ -15,7 +15,7 @@ end
 
 load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Extrinsic',filesep,'Svoboda',filesep,'Ce.dat']);
 load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Extrinsic',filesep,'Svoboda',filesep,'Re.dat']);
-load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Extrinsic',filesep,'Svoboda',filesep,'points.dat']);
+%load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Extrinsic',filesep,'Svoboda',filesep,'points.dat']);
 for cc = 1:ncam
     index_im2pts = find(options.cams_im2pts == cams(cc));
     index_cal  = find(options.cams_cal == cams(cc));

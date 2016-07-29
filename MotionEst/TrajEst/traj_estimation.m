@@ -1,12 +1,22 @@
 function [eststruct, options] = traj_estimation(options)
 nsteps = options.est.tstop-options.est.tstart+options.interp;
-% Run UKF 
+% Will the estimator correspond features?
+y = input('Will the estimator correspond features?:','s');
 fprintf('Trajectory Estimation is Running .... \n')
 tic
-%[X_ekf, Sig_X_ekf, mat_mags_ekf] = run_extended_kf(x_km1, Sigma_k, zeros(3*npts,nsteps), meas, state_update_model, state_jac, msmt_model, msmt_jac, Rt_handle);
-[X_ukf, Sig_X_ukf]               = run_unscented_kf_recursive2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
-                                                               options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
-                                                               options.est.Rt_handle, options);
+
+if strcmpi(y,'n')
+    % Run UKF 
+    %[X_ekf, Sig_X_ekf, mat_mags_ekf] = run_extended_kf(x_km1, Sigma_k, zeros(3*npts,nsteps), meas, state_update_model, state_jac, msmt_model, msmt_jac, Rt_handle);
+
+    [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
+                                                                   options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
+                                                                   options.est.Rt_handle, options);
+else
+    [X_ukf,Sig_X_ukf, meas]   = run_unscented_kf_track(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
+                                                                   options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
+                                                                   options.est.Rt_handle, options);
+end
 %outstruct.ekf.X         = X_ekf;
 eststruct.ukf.X         = X_ukf;
 %outstruct.ekf.Sig_X     = Sig_X_ekf;

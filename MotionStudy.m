@@ -76,7 +76,7 @@ handles.Cam(1).frame = [];
 handles.options.working = pwd;
 handles.options.fs_c = 119.88;
 handles.options.fs_a = 48000;
-handles.options.ucs_size = 0.1;
+handles.options.ucs_size = 0.05;
 %add subdirectories
 
 %store defualt data directory 
@@ -709,11 +709,11 @@ for cam = cams
         plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','+r');
         plot(handles.Cam(cam).pts(1,:,pp)',handles.Cam(cam).pts(2,:,pp)','-b');
         %plot the undistorted features
-%         plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','og');
-%         plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','-k');    
-%         %plot the synchronized featured
-%         plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','^b');
-%         plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','-m');  
+        plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','og');
+        plot(handles.Cam(cam).pts_rect(1,:,pp)',handles.Cam(cam).pts_rect(2,:,pp)','-k');    
+        %plot the synchronized featured
+        plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','^b');
+        plot(handles.Cam(cam).pts_sync(1,:,pp)',handles.Cam(cam).pts_sync(2,:,pp)','-m');  
         end
     end
     title(['Camera ',num2str(cam)]);
@@ -788,7 +788,7 @@ function merge_proj_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 %prompt the user to select which file should be merged.
-[filename, pathname, ~] = uigetfile('*.mat');
+[filename, pathname, ~] = uigetfile('*.mat','Select Project to Merge',handles.options.path);
 import_struct = load([pathname,filename]);
 % determine the cameras that are being imported
 cams = [import_struct.cams(1):import_struct.cams(2)];
@@ -812,7 +812,7 @@ for ii = 1:length(fields_imp)
     if ~any(strcmp(fields_imp{ii},fields_orig))     %if this field is in the imported struct and not in original 
         Cam(1).(fields_imp{ii}) = [];               %add place holder
     end
-    for kk = 1:length(import_struct.Cam)            %for all imported cameras
+    for kk = 1:ncam            %for all imported cameras
         if isempty(Cam(cams(kk)).(fields_imp{ii}))  %if that field is empty 
             %import the data into this project
             Cam(cams(kk)).(fields_imp{ii}) = import_struct.Cam(kk).(fields_imp{ii});
@@ -863,6 +863,14 @@ for c = 1:ncam
     if sum(import_fields)==0
        continue 
     end
+%     figure
+%     hold on 
+%     for pp = 1:size(import_struct.Cam(c).pts,3)
+%     plot(import_struct.Cam(c).pts(1,:,pp)',import_struct.Cam(c).pts(2,:,pp)','+r')
+%     end
+%     for pp = 1:size(Cam(cams(c)).pts,3)
+%     plot(Cam(cams(c)).pts(1,:,pp)',Cam(cams(c)).pts(2,:,pp)','+g')
+%     end
     fprintf('Merging point data from camera %d...\n',c)
     %determine difference in start frames
     dt = Cam(cams(c)).start_frame - import_struct.Cam(c).start_frame;
@@ -907,10 +915,14 @@ for c = 1:ncam
         if any(any(any(overlap_pts)))
             fprintf('Points exist in imported project which do not exist in current project.\n')
             fprintf('Importing points .... \n')
+            %copy the points from the imported dataset to the current dataset
+            Cam(cams(c)).pts(overlap_pts) = import_struct.Cam(c).pts(overlap_pts);
         end
-        %copy the points from the imported dataset to the current dataset
-        Cam(cams(c)).pts(overlap_pts) = import_struct.Cam(c).pts(overlap_pts);
+        
     end
+%     for pp = 1:size(Cam(cams(c)).pts,3)
+%         plot(Cam(cams(c)).pts(1,:,pp)',Cam(cams(c)).pts(2,:,pp)','ob')
+%     end
 end
 
 handles.Cam = Cam;
