@@ -5,14 +5,19 @@ link    = options.link;
 groups  = unique([link.Group]);
 g_max   = max(groups);
 nDof    = 0;
+links   = [];
 for gg = 1:g_max
-    links = get_group_links(link,gg);
-    nDof = nDof + sum([link(links).nDof]);
-    if nDof==nstates
+    %links = [get_group_links(link,gg)];
+    links = [links,get_group_links(link,gg)];
+    %nDof = nDof + sum([link(links).nDof]);
+    nDof = sum([link(links).nDof]);
+    if nDof == nstates
         g_max = gg;
         break
     end
 end
+
+last_group_links = get_group_links(link,g_max);
 
 cams = options.est.cams;
 
@@ -34,7 +39,7 @@ Qk = zeros(length(y_bark));
 %uncert = 2*[1:length(links)];
 %uncert = logspace(0,3,length(links));
 uncert = {[1,1,1],[3,1],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
-%uncert = {[.001,.001,.001,.001,.001],[.001],[.001],[.001],[.001],[.001],[.001]};
+%uncert = {[1,1,1,1,1],[1],[1],[1],[1],[1],[1]};
 for cc = 1:ncam         %for each camera
     Hin = invH(camstruct(cams(cc)).H);
     for ll = links
@@ -67,8 +72,11 @@ for cc = 1:ncam         %for each camera
 %             % multiply by this to increase uncertainty due to unmodeled things
 %             % (uncertainty in distortion, higher-order-uncertainty, etc)
              link_inds = links == ll;
-             Qk(ndx,ndx) = uncert{ll}(pp)* eye(length(ndx));
-
+%              if ismember(ll,last_group_links)
+                Qk(ndx,ndx) = uncert{ll}(pp)* eye(length(ndx));
+%              else
+%                 Qk(ndx,ndx) = 0.000001*eye(length(ndx),length(ndx)); 
+%              end
         end
     end
 end

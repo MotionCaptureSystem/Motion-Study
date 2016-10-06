@@ -38,7 +38,7 @@ NodeNames   = {'BB'       ,   [] ,    [],             [],                1,     
                'RD3Met'   ,   [4],    [],             [1],               3,      'DH'; 
                'RD4Met'   ,   [4],    [],             [1],               3,      'DH';
                'RD5Met'   ,   [4],    [],             [1],               3,      'DH'};
-          
+           
 nnodes = size(NodeNames,1);
 
 for nn = 1:nnodes 
@@ -142,10 +142,13 @@ for ll = 1:length(synthConfig.link)
     elseif ll==2
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = 1.1*[0,-norm(mean_delta(:,2)),0]';
+        %vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
     elseif ll==3
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = 1.2*[-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = 1.2*[-norm(mean_delta(:,3)),0,0]';
+%         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+%         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll == 4;
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = [0,0,0]';
@@ -153,13 +156,18 @@ for ll = 1:length(synthConfig.link)
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = .8*[-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = 1.15*[-norm(mean_delta(:,3)),0,0]';
+%         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+%         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==6
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = 1.2*[-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = 1.2*[-norm(mean_delta(:,3)),0,0]';
+%         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+%         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==7
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = 1.3*[-norm(mean_delta(:,2)),0,0]';
+       vectors(:,2) = 1.3*[-norm(mean_delta(:,2)),0,0]';
+%         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
         %vectors(:,3) = 1.15*[-norm(mean_delta(:,3)),0,0]';
     end
     
@@ -194,7 +202,7 @@ synthConfig.link(nn).alphas  = [pi/2];
 synthConfig.link(nn).disps   = [0];
 synthConfig.link(nn).offsets = norm(BFvecs{nn}(:,end));
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
 
 %----------------------------------Wrist CF Defn---------------------------------------

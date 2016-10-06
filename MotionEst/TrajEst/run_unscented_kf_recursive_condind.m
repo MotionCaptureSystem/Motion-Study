@@ -1,4 +1,4 @@
-function [X, Sig_X, varargout] = run_unscented_kf_track(...
+function [X, Sig_X, varargout] = run_unscented_kf_recursive_condind(...
     mu_0, Sig_0, u, z, g_handle, h_handle, Rt_handle, options, varargin)
 % RUN_UNSCENTED_KF
 %  [X, Sig_X] = RUN_UNSCENTED_KF(mu_0, Sig_0, u, z, g_handle, h_handle)
@@ -47,16 +47,13 @@ elseif strcmp(options.est.type,'point')
     nstate = 3*length(options.pts);
     ncam   = length(options.cams);
     nmeas  = 2*length(options.pts);
+    options.groups = 1;
 end
 
-if nargin >= 9
-    camstruct = varargin{1};
-end
-
-if nargin < 10
+if nargin < 9
     param = struct();
 else
-    param = varargin{2};
+    param = varargin{1};
 end
 
 % Note: code follows variable naming in thrun2005probab_robot textbook
@@ -72,14 +69,13 @@ param = populate_struct_with_defaults(param, default);
 
 % Initialize outputs
 X = zeros(nstate,size(z,2)+2);
-X(:,1) = mu_0; 
+X(:,1) = mu_0;
 X(:,2) = mu_0;
 z      = [zeros(size(z,1),2),z];
 Sig_X = zeros(nstate,nstate,size(z,2));
 Sig_X(:,:,1) = Sig_0;
 Sig_X(:,:,2) = Sig_0;
 
-t_world = [options.tstart-2,options.tstart-1,options.tstart:options.tstop];
 % figure
 % hold on
 % for yy = 1:size(z,1)/2
@@ -88,7 +84,7 @@ t_world = [options.tstart-2,options.tstart-1,options.tstart:options.tstop];
 
 % Sig = Sig_0;
 % norm_Q_log = zeros(size(u,2),1);
-
+fprintf('Evaluating Timestep: 1')
 for ii = 3:size(z,2) % for all timesteps
     % Line 2: Unscented transform on mu, Sig
     if ii ==3
@@ -96,7 +92,10 @@ for ii = 3:size(z,2) % for all timesteps
     else
         niter = 1;
     end
-    
+    for tt = 1:length(num2str(ii-1))
+        fprintf('\b');
+    end
+    fprintf(num2str(ii))
     for gg = options.groups
         for ss = 1:niter
             %added this if construct to determine what type of estimation
@@ -141,7 +140,7 @@ for ii = 3:size(z,2) % for all timesteps
         Chi_star = zeros(size(Chi_prev));
         for sigpt = 1:size(Chi_star, 2)
             if strcmp(options.est.type, 'point')
-                [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), Rt_handle);
+                [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), Rt_handle);
             elseif strcmp(options.est.type, 'joint')
                 [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), links, Rt_handle);
             end
@@ -150,7 +149,7 @@ for ii = 3:size(z,2) % for all timesteps
         % Line 4&5: Form mu_bar and Sig_bar from weighted sum of Chi_star
         mu_bar = Chi_star * wm';
         if strcmp(options.est.type, 'point')
-            [~, Rt] = g_handle(mu_bar, Rt_handle);
+            [~, Rt] = g_handle(mu_bar, X(state_inds, ii-2), Rt_handle);
         elseif strcmp(options.est.type, 'joint')
             [~, Rt] = g_handle(mu_bar, X(state_inds, ii-2), links, Rt_handle);
         end
@@ -162,18 +161,46 @@ for ii = 3:size(z,2) % for all timesteps
         Sig_bar = Sig_bar + Rt;
 
         % Line 6: Chi_bar from Unscented transform
+%         if isempty(links_prev)
+%             Chi_bar = unscented_transform(mu_bar, param.lam, Sig_bar);
+%         else
         full_mu = [X(state_inds_prev,ii);mu_bar];
         full_Sig = blkdiag(Sig_X(state_inds_prev,state_inds_prev,ii),Sig_bar);
         Chi_bar = unscented_transform(full_mu, param.lam, full_Sig);
-
+%         end
+%         figure (101)
+%         hold on
+%         if gg == 1
+%             subplot(3,1,1);
+%             plot(ii,norm(Sig_bar),'+b')
+%         elseif gg==2
+%             subplot(3,1,2);
+%             plot(ii,norm(Sig_X(state_inds_prev,state_inds_prev,ii)),'or')
+%             plot(ii,norm(Sig_bar),'+b')
+%         else
+%             subplot(3,1,3);
+%             plot(ii,norm(Sig_X(state_inds_prev,state_inds_prev,ii)),'or')
+%             plot(ii,norm(Sig_bar),'+b')
+%         end
+        % Detect & handle occlusions
+        z_gg = zeros(2*npts_l*ncam,1);
+        from_cam = zeros(2*npts_l*ncam,1);
+        for cc = 1:ncam
+            z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
+            from_cam(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = cc*ones(length([meas_inds_prev,meas_inds]),1);
+        end
+        occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
+        z_minus_occlusions = z_gg; % create local msmt copy
+        z_minus_occlusions(occlusion_ndx) = []; % strip occlusions out
+        from_cam(occlusion_ndx) = [];
         % Line 7: Z_bar from msmt model on sig points
         %Z_bar = zeros(length(meas_inds), size(Chi_bar,2));
         
-        Z_bar = zeros(ncam*length([meas_inds_prev,meas_inds]),size(Chi_bar,2));
+        Z_bar = zeros(size(z_gg,1),size(Chi_bar,2));
         for sigpt = 1:size(Chi_bar, 2)
             [Z_bar(:,sigpt), ~] = h_handle(Chi_bar(:,sigpt), ii);
         end
-        
+        Z_bar(occlusion_ndx,:) = []; % strip out occluded measurments
         % Redefine weights
         n  = length(full_mu);
         wm = [];
@@ -185,92 +212,22 @@ for ii = 3:size(z,2) % for all timesteps
         % Line 8--10: z_hat (mean msmt) and S (msmt cov) from weighted sum
         % of Z_bar, Sig_xz from "del terms"
         z_hat = Z_bar * wm';
-        z_hat_km1{gg}(:,ii) = z_hat;
-        if ii>3
-            sync_del_vec = zeros(length(z_hat),1);
-            for cc = 1:ncam
-                sync_del_vec(length(z_hat)/ncam*(cc-1)+1:length(z_hat)/ncam*cc,1) = (camstruct(cc).sync_del*options.fs - floor(camstruct(cc).sync_del*options.fs))*ones(length(z_hat)/ncam,1);
-            end
-            z_hat_camcol = reshape((ones(length(z_hat),1)-sync_del_vec).*z_hat+sync_del_vec.*z_hat_km1{gg}(:,ii-1),2,[],ncam);
-        else
-            z_hat_camcol = reshape(z_hat,2,[],ncam);
-        end
         
-        % Detect & handle occlusions
-        z_gg = zeros(2*npts_l*ncam,1);
-        from_cam = zeros(2*npts_l*ncam,1);
-        
-        for cc = 1:ncam
-            t_cam = t_world(ii)+floor(camstruct(cc).sync_del*119.88)-camstruct(cc).start_frame+1;
-            if ii>8
-                im = rgb2gray(imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88)),'.png']));
-                im_km1 = rgb2gray(imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)-1+floor(camstruct(cc).sync_del*119.88)),'.png']));
-                figure; 
-                imshow(im); hold on; title(['Timestep: ',num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88))]);
-                plot(z_hat_camcol(1,:,cc),z_hat_camcol(2,:,cc),'+c')
-                
-                if strcmp(options.est.type,'joint')
-                    pts_plot = [camstruct(cc).pt_assoc{[links_prev,links]}];
-                else
-                    pts_plot = options.pts;
-                end
-                while size(camstruct(cc).pts,3)<max(pts_plot)
-                    [~,max_ind] = max(pts_plot);
-                    pts_plot(max_ind) = [];
-                end
-                z_gg_auto = corresp_wCorrel(reshape(z_hat_camcol(:,:,cc),[],1),reshape(camstruct(cc).pts(:,t_cam,pts_plot),[],1),reshape(camstruct(cc).pts(:,t_cam-1,pts_plot),[],1),im_km1,im);
-                %z_gg_auto_all(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,1) = z_gg_auto;
-                plot(squeeze(camstruct(cc).pts(1,t_cam,pts_plot)),squeeze(camstruct(cc).pts(2,t_cam,pts_plot)),'oc')
-                for pp = 1:length(z_gg_auto)/2
-                    plot([z_hat_camcol(1,pp,cc);z_gg_auto(2*(pp-1)+1)],[z_hat_camcol(2,pp,cc);z_gg_auto(2*pp)],'-y')
-                end
-                %if gg == options.groups(end)
-                pause
-                
-                %end
-            end
-            z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
-            if strcmp(options.est.type,'joint')
-                pts_vec = [camstruct(cc).pt_assoc{[links_prev,links]}];
-            else
-                pts_vec = options.pts;
-            end
-            nmeas_cam = length(pts_vec);
-            for pp = 1:nmeas_cam
-                if pts_vec(pp)>size(camstruct(cc).pts,3)
-                    z_gg_async(2*(pp-1)+1:2*pp,1) = [NaN;NaN];
-                else
-                    z_gg_async(2*(pp-1)+1:2*pp,1) = camstruct(cc).pts(:,t_cam,pts_vec(pp));
-                end
-            end
-%             if gg == options.groups(end)
-%                 n_correct(cc,ii) = sum(z_gg_auto==z_gg_async)/2;
-%             end
-            from_cam(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = cc*ones(length([meas_inds_prev,meas_inds]),1);
-        end
-
-        occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
-        z_minus_occlusions = z_gg; % create local msmt copy
-        z_minus_occlusions(occlusion_ndx) = []; % strip occlusions out
-        from_cam(occlusion_ndx) = [];
-        Z_bar(occlusion_ndx,:) = []; % strip out occluded measurments
-        z_hat(occlusion_ndx,:) = [];
         %plot prediction and associated measurments
-%         colors = hsv(ncam);
-%         for cc = 10
-%             figure (49+cc)
-%             hold on
-%             indx = from_cam == cc;
-%             z_hat_plot = reshape(z_hat(indx),2,[]);
-%             z_gg_plot = reshape(z_minus_occlusions(indx),2,[]);
-%             plot(z_hat_plot(1,:)',z_hat_plot(2,:)','+','Color','g')
-%             plot(z_gg_plot(1,:)',z_gg_plot(2,:)','o','Color','g')
+         for cc = 1:ncam
+            figure (49+cc)
+            hold on
+            indx = from_cam == cc;
+            z_hat_plot = reshape(z_hat(indx),2,[]);
+            z_gg_plot = reshape(z_minus_occlusions(indx),2,[]);
+            plot(z_hat_plot(1,:)',z_hat_plot(2,:)','+','Color','b')
+            plot(z_gg_plot(1,:)',z_gg_plot(2,:)','o','Color','r')
 %             text(z_gg_plot(1,:),z_gg_plot(2,:),num2str(gg))
 %             text(z_hat_plot(1,:),z_hat_plot(2,:),num2str(gg))
-%             for bb = 1:size(z_hat_plot,2)
-%                 plot([z_gg_plot(1,bb);z_hat_plot(1,bb)],[z_gg_plot(2,bb);z_hat_plot(2,bb)],'-b')
-% 
-%             end
+            for bb = 1:size(z_hat_plot,2)
+                plot([z_gg_plot(1,bb);z_hat_plot(1,bb)],[z_gg_plot(2,bb);z_hat_plot(2,bb)],'-k')
+
+            end
 %             if gg == 3
 %             colors2 = hsv(size(Z_bar,2));
 %             meas_c_plot = [];
@@ -284,8 +241,9 @@ for ii = 3:size(z,2) % for all timesteps
 %                 plot([meas_plot_now(1,:),meas_plot_now(1,1)]',[meas_plot_now(2,:),meas_plot_now(2,1)]','-.','Color',colors2(point_num,:))
 %             end
 %             end
-%        end
-
+       end
+        
+         
         [~, Qt] = h_handle(full_mu, ii);
         %Qt = Qt((end-length(meas_inds)+1):end,(end-length(meas_inds)+1):end);
         del_Z = (Z_bar - repmat(z_hat,1,size(Z_bar,2)));
@@ -320,6 +278,11 @@ for ii = 3:size(z,2) % for all timesteps
         % Line 12: Update state measurement and cov
         mu = full_mu + K*(z_minus_occlusions-z_hat); %use stripped msmt
         
+        figure(100)
+        hold on
+        plot3(full_mu(1),full_mu(2),full_mu(3),'+b');
+        plot3(mu(1),mu(2),mu(3),'or');
+        plot3([full_mu(1);mu(1)],[full_mu(2);mu(2)],[full_mu(3);mu(3)],'-k');
 %         delta_vec = z_minus_occlusions-z_hat;
         
 %         for cc = 1:ncam
@@ -424,12 +387,10 @@ for ii = 3:size(z,2) % for all timesteps
         % Accumulate measurements into function outputs
         X([all_state_inds],ii) = mu;
         Sig_X(all_state_inds,all_state_inds,ii) = Sig;
-
         % norm_Q_log(ii) = max(max(Qt));
 
         outstruct.mu_bar([all_state_inds],ii) = mu;
         outstruct.Sig_bar([all_state_inds],[all_state_inds],ii) = Sig;
-        
         end
     end
 end
@@ -447,18 +408,10 @@ end
 % plot([3:ii]',sqrt(sum(z_store{3}(1:2,3:end).*z_store{3}(1:2,3:end)))','*b',[3:ii]',sqrt(sum(z_store{3}(13:14,3:end).*z_store{3}(13:14,3:end)))','*g')
 % end
 
-outstruct.n_correct = n_correct;
 if nargout > 2
     varargout{1} = outstruct;
 end
-figure 
-hold on
-colors = hsv(ncam);
-
-for cc = 1:ncam
-    plot([1:size(n_correct,2)]',n_correct(cc,:)','color',colors(cc,:))
-end
-
+    fprintf('\n')
 end %function
 
 function Chi = unscented_transform(mu, lam, Sig)

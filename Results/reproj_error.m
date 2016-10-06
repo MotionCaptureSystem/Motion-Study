@@ -10,13 +10,14 @@ pts  = options.plot.pts;
 npts = length(pts);
 tstart = options.tstart;
 tstop = options.tstop;
-nsteps = tstop-tstart+options.interp;
+nsteps = size(inertstruct.ukf.Features,2)-2;%tstop-tstart+options.interp;
 filepath = options.path;
 colors = options.plot.colors;
 save_fig    = options.plot.savefig;
 save_reproj = options.plot.saveim_reproj;
 save_reproje = options.plot.saveim_reproje;
 fig_txt_props = options.plot.fig_txt_props;
+dt = options.dt;
 
 plot_stop  = options.plot.tstop;
 plot_start = options.plot.tstart;
@@ -26,7 +27,8 @@ fig_num = options.plot.reprojframe;
 cnt = 0;
 for pp = pts
     cnt = cnt+1;
-    X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(pp-1)+1:3*pp,3:end);
+    %X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(pp-1)+1:3*pp,3:end);
+    X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(cnt-1)+1:3*cnt,3:end);
 end
 
 y_k_ukf         = zeros(2*ncam*npts,nsteps);
@@ -38,7 +40,7 @@ meas = zeros(ncam*npts*2,nsteps);
 for c = 1:ncam
     %load([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(cams(c)),filesep,'int_cam',num2str(cams(c)),'.mat'],'kc')
     %camstruct(c).dist_c = kc;
-    t = options.tstart-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c):options.tstop-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c);
+    t = options.tstart-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c):dt:options.tstop-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c);
     for pp = 1:npts
         meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = camstruct(c).pts_sync(:,t,options.plot.pts_orig(pp));
     end
@@ -83,8 +85,8 @@ AllPts_ukf = [];
 for c = 1:ncam
     for pp = 1:npts
         %Grab page of points
-        col1_ukf = reproj_error_dist_ukf(plot_start:plot_stop,1,pp,c);
-        col2_ukf = reproj_error_dist_ukf(plot_start:plot_stop,2,pp,c);
+        col1_ukf = reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),1,pp,c);
+        col2_ukf = reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),2,pp,c);
 
         %Find Occlusions
         occlusions1_ukf = isnan(col1_ukf);
@@ -136,11 +138,12 @@ for c = 1:ncam
         cnt = 0;
         for pt = 1:npts %[1,2,3,6,7,8,11,12,14,15,17];
             cnt = cnt+1;
-            p1 = plot(points_meas(plot_start:plot_stop,x,pt,c),points_meas(plot_start:plot_stop,y,pt,c),'+','Color',options.plot.colors2(cnt,:), 'LineWidth', 1);
-            p3 = plot(points_ukf(plot_start:plot_stop,x,pt,c),points_ukf(plot_start:plot_stop,y,pt,c),'-','Color',options.plot.colors2(cnt,:), 'LineWidth', 1);
+            p1 = plot(points_meas(floor(plot_start/dt):floor(plot_stop/dt),x,pt,c),points_meas(floor(plot_start/dt):floor(plot_stop/dt),y,pt,c),'+','Color',options.plot.colors2(cnt,:), 'LineWidth', 1);
+            p3 = plot(points_ukf(floor(plot_start/dt):floor(plot_stop/dt),x,pt,c),points_ukf(floor(plot_start/dt):floor(plot_stop/dt),y,pt,c),'-','Color',options.plot.colors2(cnt,:), 'LineWidth', 1);
             if cnt == 1
                 legend_handles = [p1 p3];
             end
+            text(points_ukf(floor(plot_start/dt),x,pt,c),points_ukf(floor(plot_start/dt),y,pt,c),num2str(pt))
         end
         %[hleg1, hobj1] = legend(legend_handles, 'Image Features', 'UKF Reprojection','Location','NorthWest');
         %textobj = findobj(hobj1, 'type', 'text');
@@ -191,7 +194,7 @@ for c = 1:ncam
     cnt = 0;
     for pp = 1:npts%[1,2,3,6,7,8,11,12,14,15,17]
         cnt = cnt+1;
-        p2 = plot(reproj_error_dist_ukf(plot_start:plot_stop,1,pp,c),reproj_error_dist_ukf(plot_start:plot_stop,2,pp,c),'o','Color',options.plot.colors2(cnt,:));
+        p2 = plot(reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),1,pp,c),reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),2,pp,c),'o','Color',options.plot.colors2(cnt,:));
         if cnt == 1
             legend_handles = p2;
         end

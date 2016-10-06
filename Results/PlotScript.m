@@ -21,7 +21,7 @@ hold on
 cnt = 0;
 for pp = 1:npts
     cnt = cnt+1;
-    feat_manip = 1000*YPRTransform([0,-15/180*pi,-5/180*pi],[.300,1.200,.400])*[0,1,0,0;0,0,1,0;1,0,0,0;0,0,0,1]'*[features(3*(pp-1)+1:3*pp,:);ones(1,size(features,2))];
+    feat_manip = features(3*(pp-1)+1:3*pp,:);
     plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors2(cnt,:))
 end
 
@@ -29,9 +29,9 @@ H = zeros(4,4,ncam);
 for cc = 1:ncam
     H(:,:,cc) = camstruct(cams(cc)).H;
 end
-% CFPlot(H, 50)
+CFPlot(H, 0.2)
 axis equal
-set(gca, 'FontSize', 16, 'CameraPosition', [0, 0, 0])
+%set(gca, 'FontSize', 16, 'CameraPosition', [0, 0, 0])
 xlabel('x (mm)', 'FontSize', 16)
 ylabel('y (mm)', 'FontSize', 16)
 zlabel('z (mm)', 'FontSize', 16)

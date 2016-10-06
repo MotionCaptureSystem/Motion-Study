@@ -15,7 +15,7 @@ z_hat = [0;0;1;0];
 
 %Grab a mean
 y_bark = zeros(2*ncam*npts,1);
-Qk = eye(length(y_bark));
+Qk = 1*eye(length(y_bark));
 for cc = 1:ncam         %for each camera
     for pp = 1:npts
         x_barkpp = [x_k(3*(pp-1)+1:3*pp);1];

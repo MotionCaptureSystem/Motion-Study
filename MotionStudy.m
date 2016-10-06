@@ -29,7 +29,8 @@ addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results','
 addpath(['.',filesep,'MotionEst',filesep,'Init'],...
         ['.',filesep,'MotionEst',filesep,'Models'],...
         ['.',filesep,'MotionEst',filesep,'Stereo'],...
-        ['.',filesep,'MotionEst',filesep,'TrajEst'])
+        ['.',filesep,'MotionEst',filesep,'TrajEst'],...
+        ['.',filesep,'MotionEst',filesep,'Manifolds'])
 
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -117,6 +118,7 @@ function file_menu_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 test = 5;
+guidata(hObject,handles)
 
 % --------------------------------------------------------------------
 function tracking_Callback(hObject, eventdata, handles)
@@ -124,13 +126,11 @@ function tracking_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-
 % --------------------------------------------------------------------
 function status_report_Callback(hObject, eventdata, handles)
 % hObject    handle to status_report (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
 
 % --------------------------------------------------------------------
 function im_proc_menu_Callback(hObject, eventdata, handles)
@@ -187,7 +187,7 @@ if isempty(cams2delace)
     cams2delace = cams;
 end
 
-parfor cc = 1:length(cams2delace)
+for cc = 1:length(cams2delace)
     fprintf('Delacing Camera %d Video...\n',cams2delace(cc))
     cam_num = num2str(cams2delace(cc));
     while length(cam_num)<3
@@ -205,7 +205,7 @@ Video = VideoReader([dirname,filesep,filename]);  %Read the video file
 nframe = Video.NumberOfFrames;             %Determine the number of frames
 %kk = 0;
 %wbhandle = waitbar(0,['Delacing ',filename,'...']);
-for ff = [360:460]
+for ff = [541:1:600]
     %kk = kk+10;
     frame=read(Video,ff);                       %read the frame
     name=strcat(dirname,filesep,num2str(ff),'.', im_type);
@@ -444,7 +444,7 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
             load([handles.options.path,filesep,'StereoStruct.mat'])
             handles.Stereo = Stereo;
         end
-               
+        handles.options.cams = [];       
         for cc = 1:length(handles.Cam) %for each camera, load the data
             if isempty(handles.Cam(cc).start_frame) 
             	continue;  %if start_frame is an empty matrix there was no data imported for that camera
@@ -457,7 +457,7 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
         setappdata(0,'handles',handles)
         set(handles.figure1,'ToolBar','figure')
         if isfield(Cam,'sync_del')
-            BarGraph(handles);
+%            BarGraph(handles);
         end
         end
     end
@@ -513,6 +513,10 @@ if isfield(handles, 'EstStruct')
         save([handles.options.path,filesep,'EstStruct.mat'],'options','kinc','ukf')
     else
         save([handles.options.path,filesep,'EstStruct.mat'],'options','ukf')
+    end
+    if isfield(handles.EstStruct, 'n_correct')
+        n_correct = handles.EstStruct.n_correct;
+        save([handles.options.path,filesep,'Correct_Corresp.mat'],'n_correct')
     end
 end
 alarmS = load('chirp'); sound(alarmS.y,alarmS.Fs);
@@ -605,14 +609,13 @@ function audio_sync_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % determine the sync delay by reading the audio track of the video file_menu.
-
-
-y = input('Were the cameras hardware synced? [Y/n]','s');
+y = input('Were the cameras hardware synced? [y/n]','s');
 if strcmpi(y,'y')
     for ii = handles.options.cams
         handles.Cam(ii).sync_del = 0;
         handles.Cam(ii).pts_sync = handles.Cam(ii).pts_rect;
     end
+    handles.options.fs_c = input('What sampling rate was used?:');
 else
     if isfield(handles.Cam,'sync_del')
         y = input('Sync Data Already Exists.  Do you want to recompute the delays?:','s');
@@ -626,7 +629,6 @@ else
 end
 
 % perform subframe synchronization of cameras (linear interp)
-
 guidata(hObject,handles);
 
 
@@ -651,11 +653,11 @@ function stereo_triangulation_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.options.stereo.cams = input('Which CAMERAS should be used for stereo triangulation:');
-handles.options.stereo.pts = input('Which POINTS should be used for stereo triangulation:');
+handles.options.stereo.cams   = input('Which CAMERAS should be used for stereo triangulation:');
+handles.options.stereo.pts    = input('Which POINTS should be used for stereo triangulation:');
 handles.options.stereo.tstart = input('What START time should be used for stereo triangulation:');
-handles.options.stereo.tstop = input('What STOP time should be used for stereo triangulation:');
-handles.options.stereo.dt = input('Plot every ?TH frame:');
+handles.options.stereo.tstop  = input('What STOP time should be used for stereo triangulation:');
+handles.options.stereo.dt     = input('Plot every ?TH frame:');
 %handles.options.plot.linestyle1 = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g'};
 handles.options.plot.colors     = hsv(length(handles.options.stereo.pts));
 %handles.options.plot.linestyle3 = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
@@ -933,8 +935,6 @@ function est_options_Callback(hObject, eventdata, handles)
 % hObject    handle to est_options (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.options.est.type        = input('What type of state estimator would you like to initialize? [joint,point]:','s');
-
 [init_file, init_path, ~]       = uigetfile(['.',filesep,'MotionEst',filesep,'Init'],'Choose your initialization file:');
 [handles.Cam, handles.options]  = feval([init_file(1:end-2)], handles.Cam, handles.options);
 
@@ -946,7 +946,7 @@ function estimator_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[handles.EstStruct, options] = traj_estimation(handles.options);
+[handles.EstStruct, options] = traj_estimation(handles.Cam(handles.options.est.cams), handles.options);
 
 guidata(hObject, handles);
 

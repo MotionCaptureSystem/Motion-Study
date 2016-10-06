@@ -5,7 +5,7 @@ options.groups          = [1];
 options.link_names      = {'Body','Humerus','Radius', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
 options.dof_names        = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}'};
 options.tstart          = 1;                  %Note: due to sync delay the first 
-options.tstop           = 140;                  %Useable timestep will be tstart+1 
+options.tstop           = 70;                  %Useable timestep will be tstart+1 
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
 
 options.plotflag        = 0;

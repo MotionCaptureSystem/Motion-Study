@@ -1,20 +1,21 @@
 function [camstruct,options] = Init_Flight_MotionEst_Synth(camstruct,options)
 %% --------------------------Set Options----------------------------------
 %Import Options
-options.groups          = [1,2,3];
+options.groups          = [1];
 options.link_names      = {'Body','Humerus','Radius', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
-options.dof_names        = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}'};
+options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}'};
 options.tstart          = 1;                  %Note: due to sync delay the first 
-options.tstop           = 35;                  %Useable timestep will be tstart+1 
+options.tstop           = 400;                  %Useable timestep will be tstart+1 
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
+options.dt              = 10;
 
 options.plotflag        = 0;
-options.path            = 'C:\ShandongData2015\Batflight_07242015\Synthetic';
+options.path            = 'C:\Synthetic2016';
 options.default_dir     = pwd;
 options.fs              = options.fs_c;
 
 %Trajectory Estimation Options
-options.est.cams            = [1:40];
+options.est.cams            = [1:10];
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
@@ -42,7 +43,7 @@ options.plot.saveim_reproje = 0;
 options.plot.fig_txt_props  = {'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'Bold'};
 
 %% Define the Skeleton
-SkeletonDefn
+SkeletonDefn3
 links        = get_group_links(synthConfig.link,options.groups);
 options.link = synthConfig.link(links);
 options      = create_state_vec(options);
