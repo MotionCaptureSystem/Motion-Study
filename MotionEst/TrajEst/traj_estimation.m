@@ -17,6 +17,7 @@ else
                                                                    options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
                                                                    options.est.Rt_handle, options, Cam);
     eststruct.n_correct = meas.n_correct;
+    eststruct.z_gg_auto = meas.z_auto_corr;
 end
 %outstruct.ekf.X         = X_ekf;
 eststruct.ukf.X         = X_ukf;

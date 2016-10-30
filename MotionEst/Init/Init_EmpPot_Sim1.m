@@ -8,7 +8,7 @@ options.nstate          = length(options.pts)*3;
 options.link_names      = {'Body'};
 options.dof_names       = {'q1', 'q2', 'q3'};
 options.tstart          = 1;                    %Note: due to sync delay the first 
-options.tstop           = 20;                 %Useable timestep will be tstart+1 
+options.tstop           = 10;                 %Useable timestep will be tstart+1 
 options.dt              = 1;
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
 options.plotflag        = 0;
@@ -51,10 +51,12 @@ options.est.Sigma_k = calc_Rt();
 
 % Motion model
 load D:\Users\Matt\Documents\GitHub\MotionStudy\MotionEst\Manifolds\ManifoldPts.mat
-Rt_handle = @()       calc_Rt();
+Rt_handle               = @()  calc_Rt();
 options.est.Rt_handle   = Rt_handle;
-dVzdx_handle            = @(x_km1)  dempot(x_km1,points');
-options.empman.ep       = 0.001;
+beta                    = 10;
+K                       = kernelQ_DeVito_mat(points(:,:),beta);
+dVzdx_handle            = @(x_km1)  dempot(x_km1,points(:,:),K);
+options.empman.ep       = 0.01;
 options.est.state_update_model = @(x_km1, x_km2, Rt_handle) manifold_dyn(x_km1, x_km2, Rt_handle, dVzdx_handle, options);
 
 % Measurement model: Each measurment is a col-vector of length 3*n where n

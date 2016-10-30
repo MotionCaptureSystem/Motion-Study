@@ -59,7 +59,7 @@ end
 % Note: code follows variable naming in thrun2005probab_robot textbook
 
 % Specify default parameters
-default.lam = 2; % Controls spread of sigma points
+default.lam = 0.1; % Controls spread of sigma points
 
 default.beta = 2; % Advanced param, optimal = 2 for gaussians
 default.alpha = .25; %1; % Advanced param, value guessed by hgm
@@ -167,21 +167,7 @@ for ii = 3:size(z,2) % for all timesteps
         full_mu = [X(state_inds_prev,ii);mu_bar];
         full_Sig = blkdiag(Sig_X(state_inds_prev,state_inds_prev,ii),Sig_bar);
         Chi_bar = unscented_transform(full_mu, param.lam, full_Sig);
-%         end
-%         figure (101)
-%         hold on
-%         if gg == 1
-%             subplot(3,1,1);
-%             plot(ii,norm(Sig_bar),'+b')
-%         elseif gg==2
-%             subplot(3,1,2);
-%             plot(ii,norm(Sig_X(state_inds_prev,state_inds_prev,ii)),'or')
-%             plot(ii,norm(Sig_bar),'+b')
-%         else
-%             subplot(3,1,3);
-%             plot(ii,norm(Sig_X(state_inds_prev,state_inds_prev,ii)),'or')
-%             plot(ii,norm(Sig_bar),'+b')
-%         end
+
         % Detect & handle occlusions
         z_gg = zeros(2*npts_l*ncam,1);
         from_cam = zeros(2*npts_l*ncam,1);
@@ -212,37 +198,6 @@ for ii = 3:size(z,2) % for all timesteps
         % Line 8--10: z_hat (mean msmt) and S (msmt cov) from weighted sum
         % of Z_bar, Sig_xz from "del terms"
         z_hat = Z_bar * wm';
-        
-        %plot prediction and associated measurments
-         for cc = 1:ncam
-            figure (49+cc)
-            hold on
-            indx = from_cam == cc;
-            z_hat_plot = reshape(z_hat(indx),2,[]);
-            z_gg_plot = reshape(z_minus_occlusions(indx),2,[]);
-            plot(z_hat_plot(1,:)',z_hat_plot(2,:)','+','Color','b')
-            plot(z_gg_plot(1,:)',z_gg_plot(2,:)','o','Color','r')
-%             text(z_gg_plot(1,:),z_gg_plot(2,:),num2str(gg))
-%             text(z_hat_plot(1,:),z_hat_plot(2,:),num2str(gg))
-            for bb = 1:size(z_hat_plot,2)
-                plot([z_gg_plot(1,bb);z_hat_plot(1,bb)],[z_gg_plot(2,bb);z_hat_plot(2,bb)],'-k')
-
-            end
-%             if gg == 3
-%             colors2 = hsv(size(Z_bar,2));
-%             meas_c_plot = [];
-%             for zz = 1:size(Z_bar,2)
-%                 meas_cloud = h_handle(Chi_bar(:,zz),ii);
-%                 meas_cloud(occlusion_ndx) = [];
-%                 meas_c_plot((zz-1)*2+1:zz*2,:) = reshape(meas_cloud(indx),2,[]);
-%             end
-%             for point_num = 1:size(meas_c_plot,2)
-%                 meas_plot_now = reshape(meas_c_plot(:,point_num),2,[]);
-%                 plot([meas_plot_now(1,:),meas_plot_now(1,1)]',[meas_plot_now(2,:),meas_plot_now(2,1)]','-.','Color',colors2(point_num,:))
-%             end
-%             end
-       end
-        
          
         [~, Qt] = h_handle(full_mu, ii);
         %Qt = Qt((end-length(meas_inds)+1):end,(end-length(meas_inds)+1):end);
@@ -261,108 +216,12 @@ for ii = 3:size(z,2) % for all timesteps
 
         % Line 11: K (kalman msmt gain)
         K = ((S')\Sig_xz')'; % just avoid inv(S)
-%        figure (98)
-%         if gg == 1
-%             subplot(4,1,1); plot(ii,norm(K(1:3,:)),'+b'); hold on
-%             subplot(4,1,2); plot(ii,norm(K(4:6,:)),'+r'); hold on
-%         elseif gg == 2
-%             subplot(4,1,1); plot(ii,norm(K(1:3,:)),'ob'); hold on
-%             subplot(4,1,2); plot(ii,norm(K(4:6,:)),'or'); hold on
-%             subplot(4,1,3); plot(ii,norm(K(7:10,:)),'or'); hold on
-%         else
-%             subplot(4,1,1); plot(ii,norm(K(1:3,:)),'*b'); hold on
-%             subplot(4,1,2); plot(ii,norm(K(4:6,:)),'*r'); hold on
-%             subplot(4,1,3); plot(ii,norm(K(7:10,:)),'*r'); hold on
-%             subplot(4,1,4); plot(ii,norm(K(10:end,:)),'*r'); hold on
-%         end
+
         % Line 12: Update state measurement and cov
         mu = full_mu + K*(z_minus_occlusions-z_hat); %use stripped msmt
-        
-        figure(100)
-        hold on
-        plot3(full_mu(1),full_mu(2),full_mu(3),'+b');
-        plot3(mu(1),mu(2),mu(3),'or');
-        plot3([full_mu(1);mu(1)],[full_mu(2);mu(2)],[full_mu(3);mu(3)],'-k');
-%         delta_vec = z_minus_occlusions-z_hat;
-        
-%         for cc = 1:ncam
-%             figure (101+cc)
-%             hold on
-%             indx = from_cam == cc;
-%             delta_vec_cam = reshape(delta_vec(indx),2,[]);
-%             n_meas_prev = length(meas_inds_prev)/2;
-%             if n_meas_prev
-%                 plot(delta_vec_cam(1,n_meas_prev)',delta_vec_cam(2,n_meas_prev)','*','Color','b')
-%                 text(delta_vec_cam(1,n_meas_prev)',delta_vec_cam(2,n_meas_prev)',num2str(gg))
-%             end
-%             plot(delta_vec_cam(1,n_meas_prev+1:end)',delta_vec_cam(2,n_meas_prev+1:end)','^','Color','r')
-%             text(delta_vec_cam(1,n_meas_prev+1:end)',delta_vec_cam(2,n_meas_prev+1:end)',num2str(gg))
-%         end
-%         if gg == 1
-%             z_store{gg}(:,ii) = z_minus_occlusions-z_hat;
-%         elseif gg == 2
-%             z_store{gg}(:,ii) = z_minus_occlusions-z_hat;
-%         else
-%             z_store{gg}(:,ii) = z_minus_occlusions-z_hat;
-%         end
-%         updated_meas = h_handle(mu, ii);
-%         updated_meas(occlusion_ndx) = [];
-%         for cc = 10
-%             figure (49+cc)
-%             hold on
-%             indx = from_cam == cc;
-%             meas_plot = reshape(updated_meas(indx),2,[]);
-%             z_gg_plot = reshape(z_minus_occlusions(indx),2,[]);
-%             plot(meas_plot(1,:)',meas_plot(2,:)','*','Color','g')
-%             text(meas_plot(1,:),meas_plot(2,:),num2str(gg))
-%             for bb = 1:size(z_gg_plot,2)
-%                 plot([z_gg_plot(1,bb);meas_plot(1,bb)],[z_gg_plot(2,bb);meas_plot(2,bb)],'-r')
-%             end
-%         end
-%         %pause
-%         if gg == 1
-%             figure (99)
-%             hold on
-%             plot(ii,mu(1),'+r',ii,mu(2),'+b',ii,mu(3),'+g')
-%             figure (100)
-%             hold on
-%             plot(ii,180/pi*mu(4),'+r',ii,180/pi*mu(5),'+b',ii,180/pi*mu(6),'+g')
-%         elseif gg == 2
-%             figure (99)
-%             hold on
-%             plot(ii,mu(1),'or',ii,mu(2),'ob',ii,mu(3),'og')
-%             figure (100)
-%             hold on
-%             plot(ii,180/pi*mu(4),'or',ii,180/pi*mu(5),'ob',ii,180/pi*mu(6),'og')
-%         else
-%             figure (99)
-%             hold on
-%             plot(ii,mu(1),'*r',ii,mu(2),'*b',ii,mu(3),'*g')
-%             figure (100)
-%             hold on
-%             plot(ii,180/pi*mu(4),'*r',ii,180/pi*mu(5),'*b',ii,180/pi*mu(6),'*g')
-%         end
-        
+       
         Sig = full_Sig - K*S*K';
-        
-%         figure (97)
-%         if gg == 1
-%             subplot(3,1,1); plot(ii,norm(Sig(1:3,1:3)),'+b'); hold on
-%             subplot(3,1,2); plot(ii,norm(Sig(4:6,4:6)),'+r'); hold on
-%             subplot(3,1,2); plot(ii,norm(Sig(4:6,1:3)),'+c'); hold on
-%             subplot(3,1,3); plot(ii,norm(Sig),'+g'); hold on
-%         elseif gg == 2
-%             subplot(3,1,1); plot(ii,norm(Sig(1:3,1:3)),'ob'); hold on
-%             subplot(3,1,2); plot(ii,norm(Sig(4:6,4:6)),'or'); hold on
-%             subplot(3,1,2); plot(ii,norm(Sig(4:6,1:3)),'oc'); hold on
-%             subplot(3,1,3); plot(ii,norm(Sig),'og'); hold on
-%         else
-%             subplot(3,1,1); plot(ii,norm(Sig(1:3,1:3)),'*b'); hold on
-%             subplot(3,1,2); plot(ii,norm(Sig(4:6,4:6)),'*r'); hold on
-%             subplot(3,1,2); plot(ii,norm(Sig(4:6,1:3)),'*c'); hold on
-%             subplot(3,1,3); plot(ii,norm(Sig),'*g'); hold on
-%         end
-        
+               
         all_state_inds = [state_inds_prev,state_inds];
 %         if strcmp(options.est.type, 'joint')
 %             if gg == 1

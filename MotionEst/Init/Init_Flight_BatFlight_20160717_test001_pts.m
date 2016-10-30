@@ -64,7 +64,7 @@ t = 0;
 
 % Motion model: Just kinematic point-mass model.  xn = x + u*delta_t;
 options.est.Rt_handle          = @()        calc_Rt();
-options.est.state_update_model = @(x_km1, Rt_handle) ZeroDyn(x_km1,u_k,t, Rt_handle);
+options.est.state_update_model = @(x_km1, hist, Rt_handle) ZeroDyn(x_km1,u_k,t, Rt_handle);
 
 % Measurement model: Each measurment is a col-vector of length 3*n where n
 %   is the number of fixed markers on the bat body.  Assume exact knowledge

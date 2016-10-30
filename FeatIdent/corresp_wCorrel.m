@@ -64,7 +64,7 @@ for pp = 1:npts
             row_inds_km1(trim_rows_km1) = [];
             
             im_km1_patch = im_km1(row_inds_km1,col_inds_km1);       %get the image patch
-            im_k_patch   = im_km1(row_inds_k,col_inds_k);           %get the image patch
+            im_k_patch   = im_k(row_inds_k,col_inds_k);           %get the image patch
             
             r(pp) = corr2(im_k_patch,im_km1_patch);
         else

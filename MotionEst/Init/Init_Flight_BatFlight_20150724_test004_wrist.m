@@ -20,7 +20,7 @@ options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
 options.est.state_init      = [360,1074,-307,0*pi/180,0*pi/180,-180*pi/180,...
-                                -270*pi/180,-pi/2,-60*pi/180,...
+                               -270*pi/180,-pi/2,-60*pi/180,...
                                 30/180*pi,...
                                 -75*pi/180,...
                                 55*pi/180,20*pi/180,...
@@ -76,11 +76,4 @@ options.est.Rt_handle          = @(ll)        calc_Rt_joint(ll,options.link);
 %   orientation of the body in 3D space (comes from the upper-left of the H
 %   matrix at every timestep)
 options.est.msmt_model = @(x, t) CamNet_JS(x, camstruct, options);
-
-
-
-
-
-
-
 

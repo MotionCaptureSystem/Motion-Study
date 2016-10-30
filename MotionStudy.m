@@ -22,15 +22,16 @@ function varargout = MotionStudy(varargin)
 
 % Edit the above text to modify the response to help MotionStudy
 
-% Last Modified by GUIDE v2.5 16-Jul-2016 10:44:55
+% Last Modified by GUIDE v2.5 24-Oct-2016 14:44:23
 
 % Begin initialization code - DO NOT EDIT
-addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results','PtsInfo')
+addpath('Calibration', 'Common', 'FeatIdent','ImageProc','MotionEst','Results','PtsInfo','CFDPrep')
 addpath(['.',filesep,'MotionEst',filesep,'Init'],...
         ['.',filesep,'MotionEst',filesep,'Models'],...
         ['.',filesep,'MotionEst',filesep,'Stereo'],...
         ['.',filesep,'MotionEst',filesep,'TrajEst'],...
-        ['.',filesep,'MotionEst',filesep,'Manifolds'])
+        ['.',filesep,'MotionEst',filesep,'Manifolds'],...
+        ['.',filesep,'MotionEst',filesep,'Tracking'])
 
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
@@ -91,7 +92,7 @@ handles.options.current_timestep=[];
 %store the start time and end time
 fig1_child = get(handles.figure1,'Children');
 handles.options.bar_starttime=get(fig1_child(2),'String');
-handles.options.bar_endtime=get(fig1_child(1),'String');
+%handles.options.bar_endtime=get(fig1_child(1),'String');
 
 % Update handles structure
 guidata(hObject, handles);
@@ -516,7 +517,12 @@ if isfield(handles, 'EstStruct')
     end
     if isfield(handles.EstStruct, 'n_correct')
         n_correct = handles.EstStruct.n_correct;
-        save([handles.options.path,filesep,'Correct_Corresp.mat'],'n_correct')
+        if isfield(handles.EstStruct, 'z_gg_auto')
+            z_gg_auto = handles.EstStruct.z_gg_auto;
+            save([handles.options.path,filesep,'Correct_Corresp.mat'],'n_correct','z_gg_auto')
+        else
+            save([handles.options.path,filesep,'Correct_Corresp.mat'],'n_correct')    
+        end
     end
 end
 alarmS = load('chirp'); sound(alarmS.y,alarmS.Fs);
@@ -1016,7 +1022,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 function edit2_Callback(hObject, eventdata, handles)
 % hObject    handle to edit2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1040,4 +1045,17 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
+% --------------------------------------------------------------------
+function cfd_prep_Callback(hObject, eventdata, handles)
+% hObject    handle to cfd_prep (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+% --------------------------------------------------------------------
+function cfd_reproj_Callback(hObject, eventdata, handles)
+% hObject    handle to cfd_reproj (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[file_name, path_name] = uigetfile({'*.mat','MAT-files (*.mat)'}, 'Choose Smoothed Data File for Reprojection');
+load([path_name,filesep,file_name])
+reproj_error_cfd(handles.Cam,pts,lookuptab,handles.options);

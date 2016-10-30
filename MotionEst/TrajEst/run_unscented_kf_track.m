@@ -75,6 +75,7 @@ X = zeros(nstate,size(z,2)+2);
 X(:,1) = mu_0; 
 X(:,2) = mu_0;
 z      = [zeros(size(z,1),2),z];
+z_gg_auto_all = zeros(size(z));
 Sig_X = zeros(nstate,nstate,size(z,2));
 Sig_X(:,:,1) = Sig_0;
 Sig_X(:,:,2) = Sig_0;
@@ -202,12 +203,12 @@ for ii = 3:size(z,2) % for all timesteps
         
         for cc = 1:ncam
             t_cam = t_world(ii)+floor(camstruct(cc).sync_del*119.88)-camstruct(cc).start_frame+1;
-            if ii>8
+            %if ii>8
                 im = rgb2gray(imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88)),'.png']));
                 im_km1 = rgb2gray(imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)-1+floor(camstruct(cc).sync_del*119.88)),'.png']));
-                figure; 
-                imshow(im); hold on; title(['Timestep: ',num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88))]);
-                plot(z_hat_camcol(1,:,cc),z_hat_camcol(2,:,cc),'+c')
+%                 figure; 
+%                 imshow(im); hold on; title(['Timestep: ',num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88))]);
+%                 plot(z_hat_camcol(1,:,cc),z_hat_camcol(2,:,cc),'+c')
                 
                 if strcmp(options.est.type,'joint')
                     pts_plot = [camstruct(cc).pt_assoc{[links_prev,links]}];
@@ -218,18 +219,29 @@ for ii = 3:size(z,2) % for all timesteps
                     [~,max_ind] = max(pts_plot);
                     pts_plot(max_ind) = [];
                 end
-                z_gg_auto = corresp_wCorrel(reshape(z_hat_camcol(:,:,cc),[],1),reshape(camstruct(cc).pts(:,t_cam,pts_plot),[],1),reshape(camstruct(cc).pts(:,t_cam-1,pts_plot),[],1),im_km1,im);
-                %z_gg_auto_all(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,1) = z_gg_auto;
-                plot(squeeze(camstruct(cc).pts(1,t_cam,pts_plot)),squeeze(camstruct(cc).pts(2,t_cam,pts_plot)),'oc')
-                for pp = 1:length(z_gg_auto)/2
-                    plot([z_hat_camcol(1,pp,cc);z_gg_auto(2*(pp-1)+1)],[z_hat_camcol(2,pp,cc);z_gg_auto(2*pp)],'-y')
+                predicted_feat      = reshape(z_hat_camcol(:,:,cc),[],1);
+                uncorresp_feat_k    = reshape(camstruct(cc).pts(:,t_cam,pts_plot),[],1);
+                if length(uncorresp_feat_k)<length(predicted_feat)
+                    uncorresp_feat_k = [uncorresp_feat_k;NaN*zeros(-length(uncorresp_feat_k)+length(predicted_feat),1)];
                 end
-                %if gg == options.groups(end)
-                pause
-                
-                %end
-            end
-            z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
+                uncorresp_feat_km1  = reshape(camstruct(cc).pts(:,t_cam-1,pts_plot),[],1);
+                if length(uncorresp_feat_km1)<length(predicted_feat)
+                    uncorresp_feat_km1 = [uncorresp_feat_km1;NaN*zeros(-length(uncorresp_feat_km1)+length(predicted_feat),1)];
+                end
+                z_gg_auto = corresp_optflow(predicted_feat,uncorresp_feat_k,uncorresp_feat_km1,im_km1,im);
+                z_gg_auto_all(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,ii) = z_gg_auto;
+                plot(squeeze(camstruct(cc).pts(1,t_cam,pts_plot)),squeeze(camstruct(cc).pts(2,t_cam,pts_plot)),'oc')
+%                 for pp = 1:length(z_gg_auto)/2
+%                     plot([z_hat_camcol(1,pp,cc);z_gg_auto(2*(pp-1)+1)],[z_hat_camcol(2,pp,cc);z_gg_auto(2*pp)],'-y')
+%                 end
+%                 if gg == options.groups(end)
+%                 pause
+%                 
+%                 end
+            %end
+            
+            %z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
+            z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z_gg_auto;
             if strcmp(options.est.type,'joint')
                 pts_vec = [camstruct(cc).pt_assoc{[links_prev,links]}];
             else
@@ -243,9 +255,9 @@ for ii = 3:size(z,2) % for all timesteps
                     z_gg_async(2*(pp-1)+1:2*pp,1) = camstruct(cc).pts(:,t_cam,pts_vec(pp));
                 end
             end
-%             if gg == options.groups(end)
-%                 n_correct(cc,ii) = sum(z_gg_auto==z_gg_async)/2;
-%             end
+            if gg == options.groups(end)
+                n_correct(cc,ii) = sum(z_gg_auto==z_gg_async)/2;
+            end
             from_cam(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = cc*ones(length([meas_inds_prev,meas_inds]),1);
         end
 
@@ -446,7 +458,7 @@ end
 % if gg >=3
 % plot([3:ii]',sqrt(sum(z_store{3}(1:2,3:end).*z_store{3}(1:2,3:end)))','*b',[3:ii]',sqrt(sum(z_store{3}(13:14,3:end).*z_store{3}(13:14,3:end)))','*g')
 % end
-
+outstruct.z_auto_corr = z_gg_auto_all;
 outstruct.n_correct = n_correct;
 if nargout > 2
     varargout{1} = outstruct;
