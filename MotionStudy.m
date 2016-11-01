@@ -188,25 +188,40 @@ if isempty(cams2delace)
     cams2delace = cams;
 end
 
+frames2delace = input('Which Frames would you like to delace? [enter = all]:');
+
 for cc = 1:length(cams2delace)
     fprintf('Delacing Camera %d Video...\n',cams2delace(cc))
     cam_num = num2str(cams2delace(cc));
     while length(cam_num)<3
         cam_num = ['0',cam_num];
     end
-    vid_slice([handles.options.path,filesep,'Cam',cam_num],['cam',cam_num,'.MP4'],'png')
+    vid_slice([handles.options.path,filesep,'Cam',cam_num],['cam',cam_num,'.MP4'],'png', frames2delace)
 end
 
 
-function vid_slice(dirname,filename, im_type)
+function vid_slice(dirname,filename, im_type, frames)
 %VID_SLICE          -Slices the video in FILENAME into individual images of
 % filetype TYPE.
 
 Video = VideoReader([dirname,filesep,filename]);  %Read the video file
 nframe = Video.NumberOfFrames;             %Determine the number of frames
+if isempty(frames)
+   frames = 2:nframe-1; 
+end
+
+%The delacer has a bug where if the first or last frame is delaced there is
+%a whole frame of delay.  This bug is sporadic.  Therefore, if the first or
+%last frame has been specified, chop them out of the selection.
+if frames(1) == 1
+    frames(1) = [];
+end
+if frames(end) == nframe
+    frames(end) = [];
+end
 %kk = 0;
 %wbhandle = waitbar(0,['Delacing ',filename,'...']);
-for ff = [541:1:600]
+for ff = frames
     %kk = kk+10;
     frame=read(Video,ff);                       %read the frame
     name=strcat(dirname,filesep,num2str(ff),'.', im_type);
