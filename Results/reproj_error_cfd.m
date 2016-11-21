@@ -6,7 +6,7 @@ cams = options.est.cams;
 camstruct = camstruct(cams);
 ncam = length(cams);
 %pts  = options.plot.pts;
-npts = length(pts);
+npts = size(lookuptab,2);
 nsteps = size(pts,2);%tstop-tstart+options.interp;
 save_fig    = options.plot.savefig;
 save_reproj = options.plot.saveim_reproj;
@@ -17,8 +17,10 @@ dt = options.dt;
 plot_stop  = options.plot.tstop;
 plot_start = options.plot.tstart;
 %% Transform inertial points into image space
-
-X_ukf = reshape(pts,[],size(pts,2));
+X_ukf = NaN*zeros(3*lookuptab(1,end),size(pts,2));
+for pp = 1:size(pts,3)
+    X_ukf(3*(lookuptab(1,pp)-1)+1:3*lookuptab(1,pp),:) = pts(:,:,lookuptab(2,pp));
+end
 
 y_k_ukf         = zeros(2*ncam*npts,nsteps);
 lambdas_ukf     = zeros(npts,nsteps,ncam);
@@ -37,13 +39,16 @@ for c = 1:ncam
 end
 
 %Re-inject distortion
+for pp = 1:length(lookuptab(1,:))
+    smooth_inds(3*(pp-1)+1:3*pp) = [3*(lookuptab(1,pp)-1)+1:3*lookuptab(1,pp)];
+end
 for kk = 1:nsteps
     meas_dist(:,kk)                           = CameraDistortion(meas(:,kk),camstruct);
-    [y_k_ukf(:,kk), lambdas_ukf(:,kk,:)]      = CamNetDistortion(X_ukf(:,kk),camstruct);
+    [y_k_ukf(:,kk), lambdas_ukf(:,kk,:)]      = CamNetDistortion(X_ukf(smooth_inds,kk),camstruct);
 end
 
 %reformat point array
-points_ukf = zeros(npts,2,nsteps,ncam);
+points_ukf  = zeros(npts,2,nsteps,ncam);
 points_meas = zeros(npts,2,nsteps,ncam);
 for c = 1:ncam
     for pp = 1:npts

@@ -16,7 +16,7 @@ groups = unique(groups);
 
 indx = 1;
 for gg = groups
-    for ll = get_group_links(link,gg);
+    for ll = get_group_links(link,gg)
         nvecs = size(link(ll).BFvecs,2);
         link(ll).MeasInds = indx:(indx+2*nvecs-1);
         indx = indx + 2*nvecs;
