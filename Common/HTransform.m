@@ -24,6 +24,9 @@ for ll = path
         if ll>1
             if strcmp(link(ll-1).IDkern,'YPR')
                 H = if_last_ypr(H,ll,link);
+            elseif strcmp(link(ll-1).IDkern,'YPR_flex')
+                jj = jj+1;
+                H = if_last_ypr_flex(H,q(jj),ll,link);
             end
         end
         %for all degrees of freedom for this link
@@ -63,11 +66,35 @@ for ll = path
         end
         %Form H based on YPR convention and store in tree
         H = H*YPRTransform(link(ll).thetas+thetas, link(ll).disps+disps);
+    elseif  strcmp(link(ll).IDkern,'YPR_flex') 
+        thetas = zeros(link(ll).nDof,1)/2;
+        disps  = zeros(link(ll).nDof,1)/2;
+        trans = 1;
+        rot   = 1;
+        %for all degrees of freedom for this link
+        for ii = 1:link(ll).nDof-1
+            %if dof is translational
+            if link(ll).tDof(ii)
+                disps(trans,1) = q(jj);
+                trans = trans+1;
+            %if dof is rotational
+            else
+                thetas(rot,1) = q(jj);
+                rot = rot+1;
+            end
+            jj = jj+1;
+        end
+        %Form H based on YPR convention and store in tree
+        H = H*YPRTransform(link(ll).thetas+thetas, link(ll).disps+disps);
     end
 end
 
 function H = if_last_ypr(H,ll,link)
 
 H = H+[zeros(4,3),[H(1:3,1:3)*link(ll-1).BFvecs(:,link(ll).ConPt);0]];
+
+function H = if_last_ypr_flex(H,q,ll,link)
+ConPt = link(ll-1).BFvecs(:,link(ll).ConPt);
+H = H+[zeros(4,3),[H(1:3,1:3)*(ConPt + sign(ConPt(2))*[0;q/2;0]);0]];
 
 

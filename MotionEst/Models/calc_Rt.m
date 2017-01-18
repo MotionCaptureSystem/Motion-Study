@@ -38,4 +38,4 @@ uncertainty_ratio = .95;
 % variance = (uncertainty_radius^2)/chi2inv(uncertainty_ratio,3);
 variance = (uncertainty_radius^2)/7.8147;
 %Rt = 200*eye(3);
-Rt = 0.1*eye(3);
+Rt = 0.005*eye(3);

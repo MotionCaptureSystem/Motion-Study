@@ -3,8 +3,8 @@ function [camstruct,options] = Init_Flight_BatFlight_20160717_test001_flexBB(cam
 %Import Options
 options.est.type        = 'joint';
 options.groups          = [1,2,3];
-options.link_names      = {'Body','Humerus','Radius','Wrist', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
-options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}'};
+options.link_names      = {'Body','Body Flex','Humerus','Radius','Wrist', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
+options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_b','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}'};
 options.tstart          = 368;                  %Note: due to sync delay the first 
 options.tstop           = 452;                  %Useable timestep will be tstart+1 
 options.dt              = 1;
@@ -20,17 +20,19 @@ options.est.cams            = [301,302,306,309:314,318,319,322,324,327,328,331,3
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
-options.est.state_init      = [0,0,0,0*pi/180,0*pi/180,-90*pi/180,...
-                                0,0,0,...
-                                0,...
-                                0,...
-                                0,0,...
-                                0,0,...
-                                0,0]';
+options.est.state_init      = [0,0,0,...
+                               180*pi/180,0*pi/180,0*pi/180,...
+                               pi/4,...
+                               0,pi/2,0,...
+                               0,...
+                               0,...
+                               0,0,...
+                               0,0,...
+                               0,0]';
 
 %Plot Options
 options.plot.pts           = [[1,2],[3,4,6,7,11,12,14,15,17]+1];
-options.plot.pts_orig      = [105,141,100,93,87,89,91,46,54,49,56,44,58];
+options.plot.pts_orig      = [141,105,100,93,87,89,91,46,54,49,56,44,58];
 options.plot.reprojframe   = 405;
 options.plot.tstart        = 6;
 options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
@@ -46,7 +48,7 @@ options.plot.saveim_reproje = 0;
 options.plot.fig_txt_props  = {'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'Bold'};
 
 %% Define the Skeleton
-SkeletonDefn_BatFlight_20160717_test001
+SkeletonDefn_BatFlight_20160717_test001_flexBB
 links        = get_group_links(synthConfig.link,options.groups);
 options.link = synthConfig.link(links);
 options      = create_state_vec(options);
@@ -54,7 +56,7 @@ options      = create_meas_vec(options);
 
 %% Set the point associations and create a matrix of camera measurements
 for cc = options.est.cams
-    camstruct(cc).pt_assoc = {[105,141,100],[93],[87,89,91],[],[46,54],[49,56],[44,58]};
+    camstruct(cc).pt_assoc = {[105,141], [100], [93],[87,89,91],[],[46,54],[49,56],[44,58]};
 end
 options.est.meas = create_meas_matrix(camstruct, options);
 

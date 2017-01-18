@@ -37,12 +37,13 @@ function [X, Sig_X, varargout] = run_unscented_kf_recursive_condind(...
 %    outstruct.mu_bar = [nxT] matrix of motion-model state estimates
 %    outstruct.Sig_bar = [nxnxT] matrix of motion-model state covariances 
 
-if strcmp(options.est.type,'joint')
+if strcmp(options.est.type,'joint') || strcmp(options.est.type,'gpdm')
     link= options.link;
     links = get_group_links(link,options.groups);
-    nstate = sum([link(links).nDof]);
+    nstate = size(mu_0,1);
     nmeas = 2*size([link(links).BFvecs],2);
     ncam = size(z,1)/nmeas;
+
 elseif strcmp(options.est.type,'point')
     nstate = 3*length(options.pts);
     ncam   = length(options.cams);
@@ -111,6 +112,15 @@ for ii = 3:size(z,2) % for all timesteps
                 state_inds_prev = [link(links_prev).StateInds];
                 meas_inds_prev = [link(links_prev).MeasInds];
                 npts_l = size([link([links_prev,links]).BFvecs],2);
+            elseif strcmp(options.est.type, 'gpdm')
+                state_inds = [1:size(mu_0,1)]';
+                n = state_inds(end);
+                links = get_group_links(link,gg);
+                meas_inds = [link(links).MeasInds];
+                links_prev = get_group_links(link,1:gg-1);
+                state_inds_prev = [link(links_prev).StateInds];
+                meas_inds_prev = [link(links_prev).MeasInds];
+                npts_l = size([link([links_prev,links]).BFvecs],2);
             elseif strcmp(options.est.type, 'point')
                 npts_l = length(options.pts);
                 n = 3*npts_l;
@@ -143,6 +153,8 @@ for ii = 3:size(z,2) % for all timesteps
                 [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), Rt_handle);
             elseif strcmp(options.est.type, 'joint')
                 [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), links, Rt_handle);
+            elseif strcmp(options.est.type, 'gpdm')
+            [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), options, Rt_handle);
             end
         end
 
@@ -152,6 +164,8 @@ for ii = 3:size(z,2) % for all timesteps
             [~, Rt] = g_handle(mu_bar, X(state_inds, ii-2), Rt_handle);
         elseif strcmp(options.est.type, 'joint')
             [~, Rt] = g_handle(mu_bar, X(state_inds, ii-2), links, Rt_handle);
+        elseif strcmp(options.est.type, 'gpdm')
+            [~, Rt] = g_handle(mu_bar, X(state_inds, ii-2), options, Rt_handle);
         end
         del_Sig = (Chi_star - repmat(mu_bar,1,size(Chi_star,2)));
         Sig_bar = zeros(size(Sig));

@@ -1,4 +1,4 @@
-function [y_bark, Qk] = CamNet_JS(x_k, camstruct, options)
+function [y_bark, Qk] = CamNet_JS_flexBB(x_k, camstruct, options)
 
 nstates = length(x_k);
 link    = options.link;
@@ -38,8 +38,7 @@ y_bark = zeros(nmeas,1);
 Qk = zeros(length(y_bark));
 %uncert = 2*[1:length(links)];
 %uncert = logspace(0,3,length(links));
-uncert = {[1,1,1],[1,1],[3,1],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
-%uncert = {[10,10,10],[3,10],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
+uncert = {[1,1,1],[3,1],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
 %uncert = {[1,1,1,1,1],[1],[1],[1],[1],[1],[1]};
 for cc = 1:ncam         %for each camera
     Hin = invH(camstruct(cams(cc)).H);
@@ -48,7 +47,13 @@ for cc = 1:ncam         %for each camera
         H_ll = HTransform(x_k(1:sum([link(1:ll).nDof]),1),link);
         %H_ll = HTransform(x_k,link);
         for pp = 1:nvecs
-            x_lpi = [link(ll).BFvecs(:,pp);1];
+            if strcmp(link(ll).IDKern,'YPR_Flex') && pp~=1
+                disp_sh = x_k(sum([link(1:ll).nDof]))/2;
+                delta = sign(link(ll).BFvecs(2,pp))*[0;disp_sh;0];
+                x_lpi = [link(ll).BFvecs(:,pp)+delta;1];
+            else
+                x_lpi = [link(ll).BFvecs(:,pp);1];
+            end
             %Determine predicted range to point
             lambda = z_hat'*Hin*H_ll*x_lpi; 
             %Determine Sensor Model Jacobian

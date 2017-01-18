@@ -31,6 +31,7 @@ addpath(['.',filesep,'MotionEst',filesep,'Init'],...
         ['.',filesep,'MotionEst',filesep,'Stereo'],...
         ['.',filesep,'MotionEst',filesep,'TrajEst'],...
         ['.',filesep,'MotionEst',filesep,'Manifolds'],...
+        ['.',filesep,'MotionEst',filesep,'Manifolds',filesep,'GPDM'],...
         ['.',filesep,'MotionEst',filesep,'Tracking'])
 
 gui_Singleton = 1;
@@ -260,7 +261,7 @@ function Yousi_Ident_Callback(hObject, eventdata, handles)
 % hObject    handle to Yousi_Ident (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.Cam = BatIsolation_PointRecognition_local_mb(handles.Cam, handles.options);
+handles.Cam = log_gauss_var_thresh_feats(handles.Cam, handles.options);
 guidata(hObject, handles);
 
 
@@ -488,7 +489,7 @@ function bw_mask_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-handles.Cam = Bwbat(handles.Cam,handles.options);
+handles.Cam = get_bwbat(handles.Cam,handles.options);
 guidata(hObject, handles);
 
 

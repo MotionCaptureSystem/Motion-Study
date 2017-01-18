@@ -16,7 +16,7 @@ for pp = 1:length(pts)
     plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors2(cnt,:))
 end
 
-%plot_kin_chain(kinc, options, [1:5:length(kinc)]);
+plot_kin_chain(kinc, options, [1:5:length(kinc)]);
 xlabel('x (mm)',options.plot.fig_txt_props{:}); ylabel('y (mm)',options.plot.fig_txt_props{:}); zlabel('z (mm)',options.plot.fig_txt_props{:}); 
 axis tight
 axis equal
@@ -80,8 +80,8 @@ legend_handles = [];
             fig_id = figure;
         end
         if tDof(dof)
-            legend_handles(length(legend_handles)+1) = plot(t,eststruct.ukf.X(dof+dof_prev,:),options.plot.linespec1{dof});
             hold on
+            legend_handles(length(legend_handles)+1) = plot(t,eststruct.ukf.X(dof+dof_prev,:),options.plot.linespec1{dof});
             clear title xlabel ylabel
             title([options.link_names{ll},' Displacements',],options.plot.fig_txt_props{:})
             xlabel('time (s)',options.plot.fig_txt_props{:})
@@ -89,8 +89,8 @@ legend_handles = [];
             axis tight
         else
             clear title xlabel ylabel
-            legend_handles(length(legend_handles)+1) = plot(t,180/pi*eststruct.ukf.X(dof+dof_prev,:),options.plot.linespec1{dof});
             hold on
+            legend_handles(length(legend_handles)+1) = plot(t,180/pi*eststruct.ukf.X(dof+dof_prev,:),options.plot.linespec1{dof});
             title([options.link_names{ll},' Rotations'],options.plot.fig_txt_props{:})
             xlabel('time (s)',options.plot.fig_txt_props{:})
             ylabel('Angle (deg)',options.plot.fig_txt_props{:})

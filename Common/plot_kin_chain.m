@@ -34,9 +34,9 @@ for ll = 1:nlinks
             end
             feat_manip = eye(4)*[X;ones(1,size(X,2))];%1000*YPRTransform([0,-15*pi/180,-5/180*pi],[.300,1.200,.400])*[0,1,0,0;0,0,1,0;1,0,0,0;0,0,0,1]'*[X;ones(1,size(X,2))];
             plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', linespec, 'LineWidth', 2)
-            if ll<3
+            if ll<5
                 pt_con_last(:,tt) = X(:,kinConfig.link(ll+1).ConPt);
-            elseif ll==3
+            elseif ll==5
                 pt_con_last(:,tt) = X(:,kinConfig.link(ll+2).ConPt);
             end
         end
