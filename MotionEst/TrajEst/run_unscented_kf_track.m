@@ -242,10 +242,10 @@ for ii = 3:size(z,2) % for all timesteps
                     for pp = 1:length(z_gg_auto)/2
                         plot([z_hat_camcol(1,pp,cc);z_gg_auto(2*(pp-1)+1)],[z_hat_camcol(2,pp,cc);z_gg_auto(2*pp)],'-y')
                     end
-                    if gg == options.groups(end)
-                    pause
-
-                    end
+%                     if gg == options.groups(end)
+%                     pause
+% 
+%                     end
                 end
             %end
             
