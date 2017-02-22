@@ -101,7 +101,6 @@ guidata(hObject, handles);
 % UIWAIT makes MotionStudy wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
-
 % --- Outputs from this function are returned to the command line.
 function varargout = MotionStudy_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
@@ -174,7 +173,7 @@ function delace_im_Callback(hObject, eventdata, handles)
 % hObject    handle to delace_im (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-cam_fold = dir([handles.options.path,filesep,'Cam*.',filesep]);
+cam_fold = dir([handles.options.path,filesep,'Cam*.']);
 
 cams = zeros(1,length(cam_fold));
 
@@ -463,7 +462,7 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
         end
         handles.options.cams = [];       
         for cc = 1:length(handles.Cam) %for each camera, load the data
-            if isempty(handles.Cam(cc).start_frame) 
+            if isempty(handles.Cam(cc).H) 
             	continue;  %if start_frame is an empty matrix there was no data imported for that camera
             end
             handles.options.cams = [handles.options.cams, cc];

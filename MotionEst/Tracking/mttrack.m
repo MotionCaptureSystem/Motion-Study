@@ -5,7 +5,7 @@ function [y,x]=mttrack(G,y,x,yp0,xp0)
 gx=[-1 0 1];
 gy=gx';
 u(2)=1;
-window = 15;
+window = 40;
 pt=length(y);
 
 for j=1 %number of frames to compute optical flow between
@@ -13,9 +13,11 @@ for i=1:pt %at which points
     if ~isnan(x(i,j)) && ~isnan(y(i,j))
         u(1)=1;
         u(2)=1;
+        %If the point is on the edge of the image and the window flows over
+        %the edge of the image, 
         if x(i,j)<window+1 || x(i,j)>w-window || y(i,j)<window+1 || y(i,j)>h-window 
-            y(i,j+1)=y(i,j);
-            x(i,j+1)=x(i,j);
+            y(i,j+1)=NaN;%y(i,j);
+            x(i,j+1)=NaN;%x(i,j);
         else
             imx=imfilter(G{j},gx,'symmetric');
             imy=imfilter(G{j},gy,'symmetric');

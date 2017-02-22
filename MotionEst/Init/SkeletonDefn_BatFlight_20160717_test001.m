@@ -154,19 +154,19 @@ for ll = 1:length(synthConfig.link)
         vectors(:,2) = [0,0,0]';
     elseif ll==5
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,2) = [norm(mean_delta(:,2))-norm(mean_delta(:,3)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==6
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,2) = [norm(mean_delta(:,2))-norm(mean_delta(:,3)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==7
         vectors(:,1) = [0,0,0]';
-        vectors(:,2)  = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,2) = [norm(mean_delta(:,2))-norm(mean_delta(:,3)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
         %vectors(:,3) = 1.15*[-norm(mean_delta(:,3)),0,0]';
     end

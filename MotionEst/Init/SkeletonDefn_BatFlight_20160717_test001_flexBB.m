@@ -33,12 +33,12 @@ fprintf('Creating Kinematic Definition...\n')
 %             Node Name   Parent    Child       Connecting Point       Group   ID Kernal  
 NodeNames   = {'BB_1'     ,   [] ,    [],             [],                1,      'DH';
                'BB_2'     ,   [1] ,   [3],            [1],               1,      'DH';
-               'LHum'     ,   [1]+1,  [3]+1,          [1],               1,      'DH';
-               'LRad'     ,   [2]+1,  [4]+1           [1],               1,      'DH';
-               'LWrist'   ,   [3]+1,  [5,6,7]+1,      [1],               1,      'DH';
-               'RD3Met'   ,   [4]+1,  [],             [1],               1,      'DH'; 
-               'RD4Met'   ,   [4]+1,  [],             [1],               1,      'DH';
-               'RD5Met'   ,   [4]+1,  [],             [1],               1,      'DH'};
+               'LHum'     ,   [1]+1,  [3]+1,          [1],               2,      'DH';
+               'LRad'     ,   [2]+1,  [4]+1           [1],               2,      'DH';
+               'LWrist'   ,   [3]+1,  [5,6,7]+1,      [1],               3,      'DH';
+               'RD3Met'   ,   [4]+1,  [],             [1],               3,      'DH'; 
+               'RD4Met'   ,   [4]+1,  [],             [1],               3,      'DH';
+               'RD5Met'   ,   [4]+1,  [],             [1],               3,      'DH'};
            
 nnodes = size(NodeNames,1);
 
@@ -128,6 +128,7 @@ for ll = 1:length(synthConfig.link)
             delta(:,:,vec,pair) = Stereo(pair).pts(:,:,synthConfig.link(ll).pt_nums(vec))-Stereo(pair).pts(:,:,synthConfig.link(ll).pt_nums(1));
         end
     end
+    
     mean_delta = nanmedian(delta,4);
     std_delta_pair = nanstd(delta,0,4);
     std_delta_time = nanstd(delta,0,2);

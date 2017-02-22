@@ -41,7 +41,7 @@ lineobj = findobj(h, 'type', 'line');
 set(lineobj, 'LineWidth', 1.5);
 set(textobj,  options.plot.fig_txt_props{:});
 
-CFPlot(H, 100)
+CFPlot(H, .1)
 axis tight
 axis equal
 %set(gca, 'FontSize', 16, 'CameraPosition', [0, 0, 0])

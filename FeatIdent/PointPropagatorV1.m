@@ -619,11 +619,11 @@ if any(any(any(~isnan(handles.Cam(cam).pts))))
     child_types = get(ax_child,'Type');
 
     if iscell(child_types)
-    for ii = 1:length(child_types)
-        if ~isempty(regexp('line',child_types{ii})) || ~isempty(regexp('text',child_types{ii}));
-            delete(ax_child(ii));
+        for ii = 1:length(child_types)
+            if ~isempty(regexp('line',child_types{ii})) || ~isempty(regexp('text',child_types{ii}));
+                delete(ax_child(ii));
+            end
         end
-    end
     end
 
     if handles.Cam(cam).zoom

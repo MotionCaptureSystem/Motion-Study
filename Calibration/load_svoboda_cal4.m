@@ -21,9 +21,11 @@ for cc = 1:ncam
     index_cal  = find(options.cams_cal == cams(cc));
     cam_num = cams(cc);
     %load and store extrinsics
-    t = -Ce(:,index_cal);
+    t   = -Ce(:,index_cal);
     Rot = Re(3*index_cal-2:3*index_cal,:)';
-    camstruct(cam_num).H = [Rot,t;0,0,0,1];
+    if ~isempty(Rot) && ~isempty(t)
+        camstruct(cam_num).H = [Rot,t;0,0,0,1];
+    end
     %Load and store distortion parameters
 %     [K,kc] = readradfile_mb([options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',filesep,'CalTech',filesep,'Cam',num2str(cam_num),filesep,'int_cam',num2str(cam_num),'.mat']);
 %     camstruct(cam_num).K_dist = K; %note that this is a different K than the one used for triangulation
@@ -31,10 +33,11 @@ for cc = 1:ncam
     
     %Open the .cal file
     fid  = fopen([options.path,filesep, '..',filesep,'Calibration_run',filesep,'Extrinsic',filesep,'Svoboda', filesep,'camera',num2str(cam_num),'.cal']);
-    data = textscan(fid,'%s%s%f');      %Read the data
-    %A hard lesson learned: K matrix from cal file must be negated
-    camstruct(cam_num).K = -[data{3}(13:15)';data{3}(16:18)';data{3}(19:21)'];
-    
+    if fid >0
+        data = textscan(fid,'%s%s%f');      %Read the data
+        %A hard lesson learned: K matrix from cal file must be negated
+        camstruct(cam_num).K = -[data{3}(13:15)';data{3}(16:18)';data{3}(19:21)'];
+    end
     %camstruct(cam_num).idin = cam(index).idin;
     %npts = size(points,2);
     %all_pt_nums = 1:npts;

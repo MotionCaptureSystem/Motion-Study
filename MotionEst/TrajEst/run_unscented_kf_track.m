@@ -206,11 +206,15 @@ for ii = 3:size(z,2) % for all timesteps
                 %Get the image for this timestep and the last timestep.
                 im = rgb2gray(imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88)),'.png']));
                 im_km1 = rgb2gray(imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)-1+floor(camstruct(cc).sync_del*119.88)),'.png']));
-             if cc == 10 && gg == 3 
-              figure; 
-              imshow(im); hold on; title(['Timestep: ',num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88))]);
-              plot(z_hat_camcol(1,:,cc),z_hat_camcol(2,:,cc),'+c')
-             end
+                
+                z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) =  z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
+                
+                if any(~isnan(z_gg))
+                figure (51); 
+                imshow(im); hold on; title(['Cam: ', num2str(cc),' Timestep: ',num2str(t_world(ii)+floor(camstruct(cc).sync_del*119.88))]);
+                plot(z_hat_camcol(1,:,cc)',z_hat_camcol(2,:,cc)','+c')
+                end
+                
                 %determine which points should be plotted 
                 if strcmp(options.est.type,'joint') %joint estimation point numbers are based on the pt association
                     pts_plot = [camstruct(cc).pt_assoc{[links_prev,links]}];
@@ -230,27 +234,28 @@ for ii = 3:size(z,2) % for all timesteps
                 if length(uncorresp_feat_k)<length(predicted_feat)
                     uncorresp_feat_k = [uncorresp_feat_k;NaN*zeros(-length(uncorresp_feat_k)+length(predicted_feat),1)];
                 end
+                
                 %The previous uncorresponded feature vectors
-                uncorresp_feat_km1  = reshape(camstruct(cc).pts(:,t_cam-1,pts_plot),[],1);
+                uncorresp_feat_km1  = reshape(camstruct(cc).pts(:,t_cam,pts_plot),[],1);
                 if length(uncorresp_feat_km1)<length(predicted_feat)
                     uncorresp_feat_km1 = [uncorresp_feat_km1;NaN*zeros(-length(uncorresp_feat_km1)+length(predicted_feat),1)];
                 end
-                z_gg_auto = corresp_optflow(predicted_feat,uncorresp_feat_k,uncorresp_feat_km1,im_km1,im);
+                z_gg_auto = corresp_optflow(predicted_feat,uncorresp_feat_k,uncorresp_feat_km1,im,im_km1);
                 z_gg_auto_all(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,ii) = z_gg_auto;
-                if cc == 10 && gg == 3 
-                    plot(squeeze(camstruct(cc).pts(1,t_cam,pts_plot)),squeeze(camstruct(cc).pts(2,t_cam,pts_plot)),'oc')
-                    for pp = 1:length(z_gg_auto)/2
-                        plot([z_hat_camcol(1,pp,cc);z_gg_auto(2*(pp-1)+1)],[z_hat_camcol(2,pp,cc);z_gg_auto(2*pp)],'-y')
-                    end
-%                     if gg == options.groups(end)
-%                     pause
-% 
+%                 if cc == 10 && gg == 3 
+%                     plot(squeeze(camstruct(cc).pts(1,t_cam,pts_plot)),squeeze(camstruct(cc).pts(2,t_cam,pts_plot)),'oc')
+%                     for pp = 1:length(z_gg_auto)/2
+%                         plot([z_hat_camcol(1,pp,cc);z_gg_auto(2*(pp-1)+1)],[z_hat_camcol(2,pp,cc);z_gg_auto(2*pp)],'-y')
 %                     end
-                end
+% %                     if gg == options.groups(end)
+% %                     pause
+% % 
+% %                     end
+%                 end
             %end
             
-            %z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
-            z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z_gg_auto;
+            
+            %z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z_gg_auto;
             if strcmp(options.est.type,'joint')
                 pts_vec = [camstruct(cc).pt_assoc{[links_prev,links]}];
             else
@@ -268,6 +273,18 @@ for ii = 3:size(z,2) % for all timesteps
                 n_correct(cc,ii) = sum(z_gg_auto==z_gg_async)/2;
             end
             from_cam(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = cc*ones(length([meas_inds_prev,meas_inds]),1);
+            
+            if any(~isnan(z_gg))
+                figure (51)
+                hold on
+                %plot(predicted_feat(1:2:end),predicted_feat(2:2:end),'om')
+                plot(uncorresp_feat_k(1:2:end),uncorresp_feat_k(2:2:end),'.m')
+
+                for pp = 1:length(predicted_feat)/2
+                   plot([predicted_feat(2*(pp-1)+1);z_gg_auto(2*(pp-1)+1)], [predicted_feat(2*pp);z_gg_auto(2*pp)],'-y')
+                end
+                pause(0.5)
+            end
         end
 
         occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
