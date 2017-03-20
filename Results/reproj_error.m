@@ -85,8 +85,8 @@ AllPts_ukf = [];
 for c = 1:ncam
     for pp = 1:npts
         %Grab page of points
-        col1_ukf = reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),1,pp,c);
-        col2_ukf = reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),2,pp,c);
+        col1_ukf = reproj_error_dist_ukf(ceil(plot_start/dt):floor(plot_stop/dt),1,pp,c);
+        col2_ukf = reproj_error_dist_ukf(ceil(plot_start/dt):floor(plot_stop/dt),2,pp,c);
 
         %Find Occlusions
         occlusions1_ukf = isnan(col1_ukf);
@@ -138,12 +138,12 @@ for c = 1:ncam
         cnt = 0;
         for pt = 1:npts %[1,2,3,6,7,8,11,12,14,15,17];
             cnt = cnt+1;
-            p1 = plot(points_meas(floor(plot_start/dt):floor(plot_stop/dt),x,pt,c),points_meas(floor(plot_start/dt):floor(plot_stop/dt),y,pt,c),'+','Color',options.plot.colors2(cnt,:), 'LineWidth', 1);
-            p3 = plot(points_ukf(floor(plot_start/dt):floor(plot_stop/dt),x,pt,c),points_ukf(floor(plot_start/dt):floor(plot_stop/dt),y,pt,c),'-','Color',options.plot.colors2(cnt,:), 'LineWidth', 1);
+            p1 = plot(points_meas(ceil(plot_start/dt):floor(plot_stop/dt),x,pt,c),points_meas(ceil(plot_start/dt):floor(plot_stop/dt),y,pt,c),'+','Color',options.plot.colors(cnt,:), 'LineWidth', 1);
+            p3 = plot(points_ukf(ceil(plot_start/dt):floor(plot_stop/dt),x,pt,c),points_ukf(ceil(plot_start/dt):floor(plot_stop/dt),y,pt,c),'-','Color',options.plot.colors(cnt,:), 'LineWidth', 1);
             if cnt == 1
                 legend_handles = [p1 p3];
             end
-            text(points_ukf(floor(plot_start/dt),x,pt,c),points_ukf(floor(plot_start/dt),y,pt,c),num2str(pt))
+            text(points_ukf(ceil(plot_start/dt),x,pt,c),points_ukf(ceil(plot_start/dt),y,pt,c),num2str(pt))
         end
         %[hleg1, hobj1] = legend(legend_handles, 'Image Features', 'UKF Reprojection','Location','NorthWest');
         %textobj = findobj(hobj1, 'type', 'text');
@@ -153,31 +153,31 @@ for c = 1:ncam
         %plot settings **These settings are created for 7_16_14 data run 2
         %functionality will be added so these setting can be changed.
         
-        if cams(c) == 301
-            limits = [550 880 400 720];
-        elseif cams(c) ==302
-            limits = [500 880 300 525];
-        elseif cams(c) ==303
-            limits = [413 890 316 650];
-        elseif cams(c) ==310
-            limits = [400 900 150 450];    
-        elseif cams(c) ==312
-            limits = [100 1000 280 720];
-        elseif cams(c) ==318
-            limits = [450 1050 100 400];
-        elseif cams(c) ==320
-            limits = [40 900 340 670];
-        elseif cams(c) ==325
-            limits = [519 880 175 420];
-        elseif cams(c) ==333
-            limits = [325 570 275 480];    
-        else
-            limits = [0 1280 0 720];
-        end
+%         if cams(c) == 301
+%             limits = [550 880 400 720];
+%         elseif cams(c) ==302
+%             limits = [500 880 300 525];
+%         elseif cams(c) ==303
+%             limits = [413 890 316 650];
+%         elseif cams(c) ==310
+%             limits = [400 900 150 450];    
+%         elseif cams(c) ==312
+%             limits = [100 1000 280 720];
+%         elseif cams(c) ==318
+%             limits = [450 1050 100 400];
+%         elseif cams(c) ==320
+%             limits = [40 900 340 670];
+%         elseif cams(c) ==325
+%             limits = [519 880 175 420];
+%         elseif cams(c) ==333
+%             limits = [325 570 275 480];    
+%         else
+%             limits = [0 1280 0 720];
+%         end
         
         title(['Cam ',num2str(c)], fig_txt_props{:})
         %set(handle, 'Color', 'w', 'FontSize', 20)
-        axis(limits)
+        %axis([camstruct(c).b_box(1), camstruct(c).b_box(1)+camstruct(c).b_box(3), camstruct(c).b_box(2), camstruct(c).b_box(2)+camstruct(c).b_box(4)])
         frame_struct = getframe;
         
         %Do the figures need to be saved?
@@ -194,7 +194,7 @@ for c = 1:ncam
     cnt = 0;
     for pp = 1:npts%[1,2,3,6,7,8,11,12,14,15,17]
         cnt = cnt+1;
-        p2 = plot(reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),1,pp,c),reproj_error_dist_ukf(floor(plot_start/dt):floor(plot_stop/dt),2,pp,c),'o','Color',options.plot.colors2(cnt,:));
+        p2 = plot(reproj_error_dist_ukf(ceil(plot_start/dt):floor(plot_stop/dt),1,pp,c),reproj_error_dist_ukf(ceil(plot_start/dt):floor(plot_stop/dt),2,pp,c),'o','Color',options.plot.colors(cnt,:));
         if cnt == 1
             legend_handles = p2;
         end

@@ -23,15 +23,15 @@ options.est.tstop           = options.tstop - options.tstart+1;
 options.est.state_init      = zeros(3*length(options.pts),1);
 
 %Plot Options
-options.plot.pts           = [1,2,3,4,6,7,11,12,14,15,17];
-options.plot.pts_orig      = [105,141,100,93,87,89,91,46,54,49,56,44,58];
-options.plot.reprojframe   = 405;
-options.plot.tstart        = 6;
-options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
-options.plot.linespec1        = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
-options.plot.linespec2        = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
-options.plot.linespec3        = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
-options.plot.colors         =  {'r', 'g', 'b', 'c', 'm', 'k'};
+options.plot.pts            = [1,2,3,4,6,7,11,12,14,15,17];
+options.plot.pts_orig       = [105,141,100,93,87,89,91,46,54,49,56,44,58];
+options.plot.reprojframe    = 405;
+options.plot.tstart         = 6;
+options.plot.tstop          = (options.tstop - options.tstart)-(options.plot.tstart-1);
+options.plot.linespec1      = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
+options.plot.linespec2      = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
+options.plot.linespec3      = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
+options.plot.colors         = {'r', 'g', 'b', 'c', 'm', 'k'};
 options.plot.colors2        = [255,255,255,128,0,0,0,0,0,128,255,255;0,128,255,255,255,255,255,128,0,0,0,0;0,0,0,0,0,128,255,255,255,255,255,128]'/255;
 options.plot.savepath       = 'C:\Users\Matt\Documents\GitHub\SciTechPaper';
 options.plot.savefig        = 0;

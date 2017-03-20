@@ -10,10 +10,10 @@ nsteps = size(features,2);
 figure
 hold on
 cnt = 0;
-for pp = 1:length(pts)
+for pp = pts
     cnt = cnt+1;
     feat_manip = eye(4)*[features(3*(pp-1)+1:3*pp,:);ones(1,size(features,2))];%1000*YPRTransform([0,-15/180*pi,-5/180*pi],[.300,1.200,.400])*[0,1,0,0;0,0,1,0;1,0,0,0;0,0,0,1]';
-    plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors2(cnt,:))
+    plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors(cnt,:))
 end
 
 plot_kin_chain(kinc, options, [1:5:length(kinc)]);
@@ -57,7 +57,7 @@ link = options.link;
 t = 1/fs_c*linspace(0,size(eststruct.ukf.X,2)-1, size(eststruct.ukf.X,2));
 dof_prev = 0;
 dof_int = [];
-for ll = get_group_links(link,options.groups);
+for ll = get_group_links(link,options.groups)
 nDof = link(ll).nDof;
 tDof = link(ll).tDof;
 legend_handles = [];

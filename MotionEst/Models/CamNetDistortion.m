@@ -31,7 +31,7 @@ lambdas = zeros(npts,1,ncam);
             r = norm(x_n);
             
             x_d = (1+dist_c(1)*r^2+dist_c(2)*r^4+dist_c(5)*r^6)*x_n+[2*dist_c(3)*x_n(1)*x_n(2)+ dist_c(4)*(r^2+2*x_n(1)^2);2*dist_c(4)*x_n(1)*x_n(2)+dist_c(3)*(r^2+2*x_n(2)^2)];
-            x_p = camstruct(cams(cc)).K*[x_d;1];
+            x_p = camstruct(cams(cc)).K_dist*[x_d;1];
             y_bark((cc-1)*2*npts+2*(pp-1)+1:(cc-1)*2*npts+2*pp)=x_p(1:2);
         end
     end

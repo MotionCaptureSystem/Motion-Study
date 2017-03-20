@@ -107,14 +107,14 @@ fprintf('---------------------------------------------------\n')
 
 %% Create Body Fixed Vectors
 %specifiy the points which are on each link
-synthConfig.link(1).pt_nums = [141,105];
-synthConfig.link(2).pt_nums = [105,100];
-synthConfig.link(2+1).pt_nums = [100,93];
-synthConfig.link(3+1).pt_nums = [93,91,89,87];
+synthConfig.link(1).pt_nums   = [105,141];
+synthConfig.link(2).pt_nums   = [100,105];
+synthConfig.link(2+1).pt_nums = [93,100];
+synthConfig.link(3+1).pt_nums = [87,89,91,93];
 synthConfig.link(4+1).pt_nums = [87,87];
-synthConfig.link(5+1).pt_nums = [87,54,46];
-synthConfig.link(6+1).pt_nums = [87,56,49];
-synthConfig.link(7+1).pt_nums = [87,58,44];
+synthConfig.link(5+1).pt_nums = [46,54,87];
+synthConfig.link(6+1).pt_nums = [49,56,87];
+synthConfig.link(7+1).pt_nums = [44,58,87];
 %load the stereo triangulation data
 load([options.path,filesep,'StereoStruct.mat']);
 npair = length(Stereo);         %determine the number of cameras pairs
@@ -154,7 +154,7 @@ for ll = 1:length(synthConfig.link)
         vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
         %vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
     elseif ll==3+1
-        vectors(:,1) = [0,0,0]';
+        vectors(:,1) = [norm(mean_delta(:,1)),0,0]';
         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
         vectors(:,4) = [-norm(mean_delta(:,4)),0,0]';
@@ -163,22 +163,19 @@ for ll = 1:length(synthConfig.link)
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = [0,0,0]';
     elseif ll==5+1
-        vectors(:,1) = [0,0,0]';
+        vectors(:,1) = [-norm(mean_delta(:,1)),0,0]';
         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==6+1
-        vectors(:,1) = [0,0,0]';
+        vectors(:,1) = [-norm(mean_delta(:,1)),0,0]';
         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
-%         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
-%         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==7+1
-        vectors(:,1) = [0,0,0]';
-        vectors(:,2)  = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,1) = [-norm(mean_delta(:,1)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
-        %vectors(:,3) = 1.15*[-norm(mean_delta(:,3)),0,0]';
     end
     
     BFvecs{ll} = vectors;
@@ -200,7 +197,7 @@ synthConfig.link(nn).alphas  = [0];
 synthConfig.link(nn).disps   = 0;
 synthConfig.link(nn).offsets = [norm(BFvecs{nn}(:,end))];
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
 
 %----------------------------------Humerus CF Defn---------------------------------------
@@ -209,9 +206,10 @@ synthConfig.link(nn).thetas  = [0;0;0];%pi/2;-pi/2];
 synthConfig.link(nn).alphas  = [pi/2; -pi/2; pi/2];
 synthConfig.link(nn).disps   = [0;0;norm(BFvecs{nn}(:,end))];
 synthConfig.link(nn).offsets = [0;0;0];
-synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
+synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
+
 %----------------------------------Raduis CF Defn---------------------------------------
 %rad_len = 70;
 gamma = 85/180*pi;
@@ -231,7 +229,7 @@ synthConfig.link(nn).alphas  = [-pi/2];
 synthConfig.link(nn).disps   = [0];
 synthConfig.link(nn).offsets = 0;
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = [];
+synthConfig.link(nn).BFvecs  = [];
 nn = nn+1;
 
 %----------------------------------Digit 3 Metacarpal CF Defn---------------------------------------
@@ -290,4 +288,5 @@ fprintf('---------------------------------------------------\n')
 
 figure
 plot_kin_chain(synthConfig,synthConfig,1)
+
 axis equal

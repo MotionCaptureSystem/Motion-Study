@@ -5,26 +5,33 @@ function plot_kin_chain(kinc,kinConfig, tsteps)
 hold on
 nlinks = length(kinConfig.link);
 pt_con_last = [];
-for ll = 1:nlinks
+for ll = nlinks:-1:1
     
     if ~isempty(kinConfig.link(ll).BFvecs)
         points = [kinConfig.link(ll).BFvecs, kinConfig.link(ll).BFvecs(:,1)];%];
-%         if ll>1
-%             if ~isempty(kinConfig.link(ll-1).BFvecs);
-%                 points = [points,kinConfig.link(ll-1).BFvecs(:,end)];
-%             else
-%                 points = [points,kinConfig.link(ll-2).BFvecs(:,end)];
-%             end
-%         end
         n_bf_pts = size(points,2);
-        %n_pts_tot = n_pts_tot+n_bf_pts;
         for tt = tsteps
-            %if ll == 1
-                 CFPlot(hnode2node(kinc(tt),kinConfig,1,ll),10)
-            %end
+            CFPlot(hnode2node(kinc(tt),kinConfig,1,ll),.01)
             X = [eye(3,3),zeros(3,1)]*hnode2node(kinc(tt),kinConfig,1,ll)*[points;ones(1,n_bf_pts)];
-            if ll>1
-                X = [X, pt_con_last(:,tt)];
+            
+            if ~isempty(kinConfig.link(ll).ConPt)
+                if ~isempty(kinConfig.link(kinConfig.link(ll).parent).BFvecs)
+                    con_pt = kinConfig.link(kinConfig.link(ll).parent).BFvecs(:,kinConfig.link(ll).ConPt);
+                    H = hnode2node(kinc(tt),kinConfig,1,kinConfig.link(ll).parent);
+                else
+                    con_pt = kinConfig.link(kinConfig.link(kinConfig.link(ll).parent).parent).BFvecs(:,kinConfig.link(kinConfig.link(ll).parent).ConPt);
+                    H = hnode2node(kinc(tt),kinConfig,1,kinConfig.link(kinConfig.link(ll).parent).parent);
+                end
+                con_pt = [eye(3,3),zeros(3,1)]*H*[con_pt;1];
+                X = [X(:,1:end-1,1),con_pt,X(:,end)];
+            end
+            if ~isempty(kinConfig.link(ll).parent)
+                numbers = [kinConfig.link(ll).pt_nums,kinConfig.link(kinConfig.link(ll).parent).pt_nums(kinConfig.link(ll).ConPt)];
+            else
+                numbers = kinConfig.link(ll).pt_nums;
+            end
+            for pp = 1:size(X,2)-1
+                text(X(1,pp)',X(2,pp)',X(3,pp)',num2str(numbers(pp)))
             end
             
             if tt==tsteps(1)
@@ -32,14 +39,8 @@ for ll = 1:nlinks
             else
                 linespec = 'o-k';
             end
-            feat_manip = eye(4)*[X;ones(1,size(X,2))];%1000*YPRTransform([0,-15*pi/180,-5/180*pi],[.300,1.200,.400])*[0,1,0,0;0,0,1,0;1,0,0,0;0,0,0,1]'*[X;ones(1,size(X,2))];
-            plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', linespec, 'LineWidth', 2)
-            if ll<5
-                pt_con_last(:,tt) = X(:,kinConfig.link(ll+1).ConPt);
-            elseif ll==5
-                pt_con_last(:,tt) = X(:,kinConfig.link(ll+2).ConPt);
-            end
+            
+            plot3(X(1,:)',X(2,:)', X(3,:)', linespec, 'LineWidth', 2)
         end
-        %pt_con_last(:,tt) = X(:,kinConfig.link(ll+1).ConPt);
     end
 end

@@ -393,7 +393,7 @@ function extrinsic_svoboda_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 %%import all available calibration_menu parameters
-[handles.options, handles.Cam] = load_svoboda_cal4(handles.Cam, handles.options);
+[handles.options, handles.Cam] = load_svoboda_cal5(handles.Cam, handles.options);
 guidata(hObject,handles);
 
 
@@ -462,7 +462,7 @@ if exist([handles.options.path,filesep,'CamStruct.mat'],'file') %If there is a d
         end
         handles.options.cams = [];       
         for cc = 1:length(handles.Cam) %for each camera, load the data
-            if isempty(handles.Cam(cc).H) 
+            if isempty(handles.Cam(cc).start_frame) 
             	continue;  %if start_frame is an empty matrix there was no data imported for that camera
             end
             handles.options.cams = [handles.options.cams, cc];

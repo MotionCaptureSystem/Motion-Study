@@ -16,8 +16,9 @@ dist = zeros(npts,1);
 numbers = zeros(npts,1);
 
 %convert the images to double class
-G{1} = double(im_km1);
-G{2} = double(im_k);
+h = fspecial('gaussian',5,1);
+G{1} = double(imfilter(histeq(im_km1),h));
+G{2} = double(imfilter(histeq(im_k),h));
 %format the predicted locations appropriately 
 pts = reshape(phi_hat,2,[]);
 %format the current locations appropriately

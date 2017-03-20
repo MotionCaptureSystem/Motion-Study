@@ -5,10 +5,10 @@ options.est.type        = 'joint';
 options.groups          = [1,2,3];
 options.link_names      = {'Body','Body Flex','Humerus','Radius','Wrist', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
 options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_b','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}'};
-options.tstart          = 377;                  %Note: due to sync delay the first 
-options.tstop           = 387;                  %Useable timestep will be tstart+1 
+options.tstart          = 368;       %Note: due to sync delay the first 
+options.tstop           = 372;       %Useable timestep will be tstart+1 
 options.dt              = 1;
-options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
+options.interp          = 1;         %1- data Was NOT interpolated, 0- otherwise;
 
 options.plotflag        = 0;
 %options.path           = 'C:\ShandongData2015\Batflight_07242015\Test004';
@@ -20,9 +20,19 @@ options.est.cams            = [301,302,306,309:314,318,319,322,324,327,328,331,3
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
-options.est.state_init      = [-38.7,-234.6,13.12,...
+% options.est.state_init      = [-38.7,-92,13.12,...
+%                                201.9*pi/180,12.83*pi/180,10.84*pi/180,...
+%                                40*pi/180,...
+%                                75.49*pi/180,62.29*pi/180,-96.19*pi/180,...
+%                                -19.4*pi/180,...
+%                                -8.48*pi/180,...
+%                                -28.1*pi/180,48.39*pi/180,...
+%                                -35.25*pi/180,75.33*pi/180,...
+%                                23.56*pi/180,37.5*pi/180]';
+
+options.est.state_init      = [-1.149,0.0822,-0.03455,...
                                201.9*pi/180,12.83*pi/180,10.84*pi/180,...
-                               55.53*pi/180,...
+                               40*pi/180,...
                                75.49*pi/180,62.29*pi/180,-96.19*pi/180,...
                                -19.4*pi/180,...
                                -8.48*pi/180,...
@@ -31,16 +41,15 @@ options.est.state_init      = [-38.7,-234.6,13.12,...
                                23.56*pi/180,37.5*pi/180]';
 
 %Plot Options
-options.plot.pts           = [[1,2],[3,4,6,7,11,12,14,15,17]+1];
-options.plot.pts_orig      = [141,105,100,93,87,89,91,46,54,49,56,44,58];
-options.plot.reprojframe   = 405;
-options.plot.tstart        = 6;
+options.plot.pts_orig      = [105,141,100,93,87,89,91,46,54,49,56,44,58];
+options.plot.pts           = [1:length(options.plot.pts_orig)];
+options.plot.reprojframe   = 368;
+options.plot.tstart        = 1;
 options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
 options.plot.linespec1        = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
 options.plot.linespec2        = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
 options.plot.linespec3        = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
-options.plot.colors         =  {'r', 'g', 'b', 'c', 'm', 'k'};
-options.plot.colors2        = [255,255,255,128,0,0,0,0,0,128,255,255;0,128,255,255,255,255,255,128,0,0,0,0;0,0,0,0,0,128,255,255,255,255,255,128]'/255;
+options.plot.colors         =  hsv(length(options.plot.pts));
 options.plot.savepath       = 'C:\Users\Matt\Documents\GitHub\SciTechPaper';
 options.plot.savefig        = 0;
 options.plot.saveim_reproj  = 0;
@@ -78,11 +87,5 @@ options.est.Rt_handle          = @(ll)        calc_Rt_joint(ll,options.link);
 %   orientation of the body in 3D space (comes from the upper-left of the H
 %   matrix at every timestep)
 options.est.msmt_model = @(x, t) CamNet_JS(x, camstruct, options);
-
-
-
-
-
-
 
 

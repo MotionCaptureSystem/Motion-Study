@@ -1,13 +1,14 @@
 function [camstruct,options] = Init_Flight_MotionEst_Synth(camstruct,options)
 %% --------------------------Set Options----------------------------------
 %Import Options
+options.est.type        = 'joint';
 options.groups          = [1];
 options.link_names      = {'Body','Humerus','Radius', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
 options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}'};
-options.tstart          = 1;                  %Note: due to sync delay the first 
+options.tstart          = 3;                  %Note: due to sync delay the first 
 options.tstop           = 400;                  %Useable timestep will be tstart+1 
 options.interp          = 1;                    %1- data Was NOT interpolated, 0- otherwise;
-options.dt              = 10;
+options.dt              = 1;
 
 options.plotflag        = 0;
 options.path            = 'C:\Synthetic2016';
@@ -28,7 +29,7 @@ options.est.state_init      = [1.0e+03 *[1.2500,1.5000,1.0000],0,pi/8,pi/2,...
 %Plot Options
 options.plot.pts           = [1:5,6,8,10,12,14];
 options.plot.pts_orig      = [1:5,6,8,10,12,14];
-options.plot.reprojframe   = 405;
+options.plot.reprojframe   = 200;
 options.plot.tstart        = 1;
 options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
 options.plot.linespec1        = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};

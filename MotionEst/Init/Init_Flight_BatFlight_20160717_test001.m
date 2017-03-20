@@ -1,4 +1,4 @@
-function [camstruct,options] = Init_Flight_BatFlight_20160717_test001_flexBB(camstruct,options)
+function [camstruct,options] = Init_Flight_BatFlight_20160717_test001(camstruct,options)
 %% --------------------------Set Options----------------------------------
 %Import Options
 options.est.type        = 'joint';

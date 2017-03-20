@@ -1,4 +1,4 @@
-function [X, Sig_X, varargout] = run_unscented_kf_track(...
+function [X, Sig_X, varargout] = run_unscented_kf_track2(...
     mu_0, Sig_0, u, z, g_handle, h_handle, Rt_handle, options, varargin)
 % RUN_UNSCENTED_KF
 %  [X, Sig_X] = RUN_UNSCENTED_KF(mu_0, Sig_0, u, z, g_handle, h_handle)
@@ -75,7 +75,6 @@ X = zeros(nstate,size(z,2)+2);
 X(:,1) = mu_0; 
 X(:,2) = mu_0;
 z      = [zeros(size(z,1),2),z];
-z_gg_auto_all = zeros(size(z));
 Sig_X = zeros(nstate,nstate,size(z,2));
 Sig_X(:,:,1) = Sig_0;
 Sig_X(:,:,2) = Sig_0;
@@ -89,9 +88,13 @@ t_world = [options.tstart-2,options.tstart-1,options.tstart:options.tstop];
 
 % Sig = Sig_0;
 % norm_Q_log = zeros(size(u,2),1);
-
+fprintf('Estimating Time Step: ');
+z_gg_auto_all{1} = NaN*zeros(126,size(z,2));
+z_gg_auto_all{2} = NaN*zeros(294,size(z,2));
+z_gg_auto_all{3} = NaN*zeros(size(z));
 for ii = 3:size(z,2) % for all timesteps
     % Line 2: Unscented transform on mu, Sig
+    fprintf('%i',ii);
     if ii ==3
         niter = 1;
     else
@@ -175,6 +178,14 @@ for ii = 3:size(z,2) % for all timesteps
             [Z_bar(:,sigpt), ~] = h_handle(Chi_bar(:,sigpt), ii);
         end
         
+%         figure
+%         im = imread([options.path,filesep,'Cam302',filesep,num2str(t_world(ii)),'.png']);
+%         imshow(im)
+%         hold on
+%         plot(Z_bar(26+1:2:26+length([meas_inds_prev,meas_inds]),1), Z_bar(26+2:2:26+length([meas_inds_prev,meas_inds]),1), '+c')
+%         for pt = 1:length([meas_inds_prev,meas_inds])/2
+%             plot([Z_bar(26+2*(pt-1)+1,2:end),Z_bar(26+1,2)]', [Z_bar(26+2*pt,2:end),Z_bar(26+2*pt,2)]', '*-m')
+%         end
         % Redefine weights
         n  = length(full_mu);
         wm = [];
@@ -189,11 +200,11 @@ for ii = 3:size(z,2) % for all timesteps
         z_hat_km1{gg}(:,ii) = z_hat;
         
         z_hat_camcol = reshape(z_hat,2,[],ncam);
-        
+%         plot(z_hat_camcol(26+1:2:26+length([meas_inds_prev,meas_inds])),z_hat_camcol(26+2:2:26+length([meas_inds_prev,meas_inds])),'xg')
+%         pause
         % Detect & handle occlusions
         z_gg = zeros(2*npts_l*ncam,1);
         from_cam = zeros(2*npts_l*ncam,1);
-        
         for cc = 1:ncam
             %Determine the time index for this camera
             t_cam = t_world(ii)+floor(camstruct(cc).sync_del*119.88)-camstruct(cc).start_frame+1;
@@ -203,10 +214,14 @@ for ii = 3:size(z,2) % for all timesteps
             %Read the image from this timestep for which correspondence
             %will be computed
             im_k   = imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)),'.png']);
+            if size(im_k,3)>1
             im_k   = rgb2gray(im_k);
+            end
             %read the image from the previous timestep
             im_km1 = imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)-1),'.png']);
+            if size(im_km1,3)>1
             im_km1 = rgb2gray(im_km1);
+            end
             
             %Get the point numbers to correspond
             if strcmp(options.est.type,'joint') %joint estimation point numbers are based on the pt association
@@ -215,13 +230,17 @@ for ii = 3:size(z,2) % for all timesteps
                 pt_nums = options.pts;
             end
             
-            phi_hat = reshape(z_hat_camcol(:,:,cc),[],1);   %estimated point locations
+            phi_hat = CameraDistortion(reshape(z_hat_camcol(:,:,cc),[],1),camstruct(cc));   %estimated point locations
             phi     = reshape(camstruct(cc).pts(:,t_cam,pt_nums),[],1); %uncorresponded features
             phi_km1 = reshape(camstruct(cc).pts(:,t_cam-1,pt_nums),[],1); %previous corresponded features 
             %Run the optical flow correspondence
             phi_corr = corresp_optflow(phi_hat,phi,phi_km1,im_km1,im_k);
             %Create a figure to display the correspondences
-            if any(~isnan(phi)) %%&& cc == 18
+            z_gg_auto_all{gg}(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,ii) = phi_corr;
+            if gg == options.groups(end)
+                n_correct(cc,ii) = sum(phi_corr==phi)/2;
+            end
+            if 0%any(~isnan(phi)) && gg == 3
                 figure
                 imshow(im_k)
                 hold on
@@ -235,12 +254,14 @@ for ii = 3:size(z,2) % for all timesteps
                 title(sprintf('Cam: %i Timestep: %i',cc,t_world(ii)))
             end
         end
-
+                       
+%         occlusion_ndx = find(isnan(z_gg_auto_all{gg}(:,ii))); % find ndx of occlusions
+%         z_minus_occlusions = z_gg_auto_all{gg}(:,ii); % create local msmt copy
         occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
         z_minus_occlusions = z_gg; % create local msmt copy
         z_minus_occlusions(occlusion_ndx) = []; % strip occlusions out
-        from_cam(occlusion_ndx) = [];
-        Z_bar(occlusion_ndx,:) = []; % strip out occluded measurments
+        %from_cam(occlusion_ndx) = [];
+        Z_bar(occlusion_ndx,:) = []; % strip out occluded measurements
         z_hat(occlusion_ndx,:) = [];
 
         [~, Qt] = h_handle(full_mu, ii);
@@ -279,23 +300,19 @@ for ii = 3:size(z,2) % for all timesteps
         
         end
     end
+    
+    if ii<size(z,2)
+        cnt = 0;
+        while cnt<length(num2str(ii))
+            cnt = cnt+1;
+            fprintf('\b')
+        end
+    end
 end
-% norm_Q_log
 
-% figure
-% hold on
-% if gg>=1
-% plot([3:ii]',sqrt(sum(z_store{1}(1:2,3:end).*z_store{1}(1:2,3:end)))','+b')
-% end
-% if gg>=2
-% plot([3:ii]',sqrt(sum(z_store{2}(1:2,3:end).*z_store{2}(1:2,3:end)))','ob',[3:ii]',sqrt(sum(z_store{2}(13:14,3:end).*z_store{2}(13:14,3:end)))','og')
-% end
-% if gg >=3
-% plot([3:ii]',sqrt(sum(z_store{3}(1:2,3:end).*z_store{3}(1:2,3:end)))','*b',[3:ii]',sqrt(sum(z_store{3}(13:14,3:end).*z_store{3}(13:14,3:end)))','*g')
-% end
-%outstruct.z_auto_corr = z_gg_auto_all;
-%outstruct.n_correct = n_correct;
-outstruct = 2;
+outstruct.z_auto_corr = z_gg_auto_all;
+outstruct.n_correct = n_correct;
+
 if nargout > 2
     varargout{1} = outstruct;
 end

@@ -9,7 +9,7 @@ path = [options.path,filesep,'..',filesep,'Calibration_run',filesep,'Intrinsic',
 %for the desired cameras, import the parameters
 for c = cams
     load([path,filesep,'Cam',num2str(c),filesep,'int_cam',num2str(c),'.mat'],'KK','kc','alpha_c','fc','cc')
-    camstruct(c).K_dist = KK;
+    camstruct(c).K_dist  = KK;
     camstruct(c).kc_dist = kc;
     camstruct(c).fc_dist = fc;
     camstruct(c).cc_dist = cc;
