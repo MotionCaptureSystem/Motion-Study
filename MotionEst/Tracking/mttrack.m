@@ -22,9 +22,9 @@ for j=1 %number of frames to compute optical flow between
     imxx=imx.^2;
     imyy=imy.^2;
     imxy=imx.*imy;
-    figure
+    %figure
 %     subplot(2,1,1); imagesc(G{j});
-    imagesc(G{j+1});
+    %imagesc(G{j+1});
 for i=1:pt %at which points
     if ~isnan(x(i,j)) && ~isnan(y(i,j))
         u(1,1)=10;
@@ -40,7 +40,7 @@ for i=1:pt %at which points
             xp=xp0(i,j);
             yp=yp0(i,j);
 
-            hold on; plot(xp,yp,'+g')
+            %hold on; plot(xp,yp,'+g')
             
             [Xq1,Yq1]=meshgrid(x(i,j)-window:1:x(i,j)+window,y(i,j)-window:1:y(i,j)+window);
             Vq1=interp2(G{j},Xq1,Yq1);
@@ -67,7 +67,7 @@ for i=1:pt %at which points
                 xp = xp+u(1);
                 yp = yp+u(2);
                 
-                hold on; plot(xp,yp,'.m')
+                %hold on; plot(xp,yp,'.m')
 %               subplot(2,1,2); hold on; plot(xp,yp,'.m')
                 %pause
                 if xp<window+1 || xp>w-window || yp<window+1 || yp>h-window

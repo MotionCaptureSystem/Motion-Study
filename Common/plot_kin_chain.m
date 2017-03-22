@@ -11,8 +11,9 @@ for ll = nlinks:-1:1
         points = [kinConfig.link(ll).BFvecs, kinConfig.link(ll).BFvecs(:,1)];%];
         n_bf_pts = size(points,2);
         for tt = tsteps
-            CFPlot(hnode2node(kinc(tt),kinConfig,1,ll),.01)
-            X = [eye(3,3),zeros(3,1)]*hnode2node(kinc(tt),kinConfig,1,ll)*[points;ones(1,n_bf_pts)];
+            H1 = hnode2node(kinc(tt),kinConfig,1,ll);
+            CFPlot(H1,norm(H1(1:3,4))/1000)
+            X = [eye(3,3),zeros(3,1)]*H1*[points;ones(1,n_bf_pts)];
             
             if ~isempty(kinConfig.link(ll).ConPt)
                 if ~isempty(kinConfig.link(kinConfig.link(ll).parent).BFvecs)

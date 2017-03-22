@@ -60,7 +60,7 @@ end
 % Note: code follows variable naming in thrun2005probab_robot textbook
 
 % Specify default parameters
-default.lam = 0.1; % Controls spread of sigma points
+default.lam = 2; % Controls spread of sigma points
 
 default.beta = 2; % Advanced param, optimal = 2 for gaussians
 default.alpha = .25; %1; % Advanced param, value guessed by hgm
@@ -154,7 +154,7 @@ for ii = 3:size(z,2) % for all timesteps
             elseif strcmp(options.est.type, 'joint')
                 [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), links, Rt_handle);
             elseif strcmp(options.est.type, 'gpdm')
-            [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), options, Rt_handle);
+                [Chi_star(:,sigpt), ~] = g_handle(Chi_prev(:,sigpt), X(state_inds,ii-2), options, Rt_handle);
             end
         end
 

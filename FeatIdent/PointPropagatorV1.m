@@ -103,14 +103,10 @@ function varargout = PointPropagatorV1_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 
-
-
 function filepath_Callback(hObject, eventdata, handles)
 % hObject    handle to filepath (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
- 
 
 set(hObject, 'String', handles.data_dir);
 guidata(hObject, handles);
@@ -567,13 +563,13 @@ point_num = str2double(get(handles.current_point_label,'String'));
 %determine number of total steps and number of total points
 [~, nsteps, npts] = size(handles.Cam(cam).pts);
 %if the zoom feature is being used, compute the appropriate offset
-if handles.Cam(cam).zoom
-        x = handles.Cam(cam).b_box(timestep,1)-1-handles.bbox_delta;
-        y = handles.Cam(cam).b_box(timestep,2)-1-handles.bbox_delta;
-else %otherwise, the offset is nothing
+% if handles.Cam(cam).zoom
+%         x = handles.Cam(cam).b_box(timestep,1)-1-handles.bbox_delta;
+%         y = handles.Cam(cam).b_box(timestep,2)-1-handles.bbox_delta;
+% else %otherwise, the offset is nothing
     x = 0;
     y = 0;
-end
+% end
 
 %if a new point number has been specified, then add page to the point
 %matrix
@@ -626,17 +622,17 @@ if any(any(any(~isnan(handles.Cam(cam).pts))))
         end
     end
 
-    if handles.Cam(cam).zoom
-        x = handles.Cam(cam).b_box(timestep,1)-1-handles.bbox_delta;
-        y = handles.Cam(cam).b_box(timestep,2)-1-handles.bbox_delta;
-        plot(handles.current_image, reshape(handles.Cam(cam).pts(1,timestep,:)-x,1,[]), reshape(handles.Cam(cam).pts(2,timestep,:)-y,1,[]),'r+');
-        for pp = 1:npts
-            if ~isnan(handles.Cam(cam).pts(:,timestep,pp))
-                h = text(handles.Cam(cam).pts(1,timestep,pp)-x,handles.Cam(cam).pts(2,timestep,pp)-y,num2str(pp), 'Color', 'r', 'Parent', handles.current_image, 'HorizontalAlignment', 'Right');
-                set(h, 'HitTest', 'off');
-            end
-        end
-    else
+%     if handles.Cam(cam).zoom
+%         x = handles.Cam(cam).b_box(timestep,1)-1-handles.bbox_delta;
+%         y = handles.Cam(cam).b_box(timestep,2)-1-handles.bbox_delta;
+%         plot(handles.current_image, reshape(handles.Cam(cam).pts(1,timestep,:)-x,1,[]), reshape(handles.Cam(cam).pts(2,timestep,:)-y,1,[]),'r+');
+%         for pp = 1:npts
+%             if ~isnan(handles.Cam(cam).pts(:,timestep,pp))
+%                 h = text(handles.Cam(cam).pts(1,timestep,pp)-x,handles.Cam(cam).pts(2,timestep,pp)-y,num2str(pp), 'Color', 'r', 'Parent', handles.current_image, 'HorizontalAlignment', 'Right');
+%                 set(h, 'HitTest', 'off');
+%             end
+%         end
+%     else
         plot(handles.current_image, reshape(handles.Cam(cam).pts(1,timestep,:),1,[]), reshape(handles.Cam(cam).pts(2,timestep,:),1,[]),'ro');
         for pp = 1:npts
             if ~isnan(handles.Cam(cam).pts(:,timestep,pp))
@@ -644,7 +640,7 @@ if any(any(any(~isnan(handles.Cam(cam).pts))))
                 set(h, 'HitTest', 'off');
             end
         end
-    end
+%     end
 
     set(handles.current_image,'NextPlot', 'replacechildren');
     set(handles.image_handle, 'ButtonDownFcn', {@current_image_ButtonDownFcn, handles});
@@ -661,25 +657,26 @@ function handles = show_image(hObject, handles)
 cam = str2double(get(handles.current_cam,'String'));
 tstep = round(get(handles.time_slider,'Value'))-handles.Cam(cam).start_frame+1;
 
-if isfield(handles.Cam(cam),'b_box')
-    b_box = handles.Cam(cam).b_box(tstep,:)+[-handles.bbox_delta, -handles.bbox_delta, 2*handles.bbox_delta, 2*handles.bbox_delta];
-    if b_box(1)<1
-        b_box(1) = 1;
-    end
-    if b_box(2)<1
-        b_box(2) = 1;
-    end
-    if b_box(1)+b_box(3)>1280
-        b_box(3) = 1280-b_box(1);
-    end
-    if b_box(2)+b_box(4)>720
-        b_box(4) = 720-b_box(2);
-    end
-    h = imshow(handles.Cam(cam).frame(b_box(2):b_box(2)+b_box(4),b_box(1):b_box(1)+b_box(3)),'Parent',handles.current_image);
-    handles.Cam(cam).zoom = 1;
-else
+% if isfield(handles.Cam(cam),'b_box')
+%     b_box = handles.Cam(cam).b_box(tstep,:)+[-handles.bbox_delta, -handles.bbox_delta, 2*handles.bbox_delta, 2*handles.bbox_delta];
+%     if b_box(1)<1
+%         b_box(1) = 1;
+%     end
+%     if b_box(2)<1
+%         b_box(2) = 1;
+%     end
+%     if b_box(1)+b_box(3)>1280
+%         b_box(3) = 1280-b_box(1);
+%     end
+%     if b_box(2)+b_box(4)>720
+%         b_box(4) = 720-b_box(2);
+%     end
+%     h = imshow(handles.Cam(cam).frame,'Parent',handles.current_image);
+%     axis([b_box(1),b_box(1)+b_box(3),b_box(2),b_box(2)+b_box(4)])
+%     handles.Cam(cam).zoom = 1;
+% else
     h = imshow(handles.Cam(cam).frame,'Parent',handles.current_image);
-end
+% end
 handles.image_handle = h;
 
 if ~isempty(handles.Cam(cam).pts) && any(any(~isnan(handles.Cam(cam).pts(:,tstep,:))))
@@ -894,14 +891,14 @@ for pt = pts2est
     else
        feat_cands(:,pt) = [NaN;NaN];
     end
-    h2 = text(double(feat_cands(1,pt)'-b_box(1)+bbox_delta),double(feat_cands(2,pt)'-b_box(2)+bbox_delta),num2str(pt),'color', 'y');
+    h2 = text(double(feat_cands(1,pt)'),double(feat_cands(2,pt)'),num2str(pt),'color', 'y');
     txt_obj = [txt_obj, h2];
     set(h2, 'HitTest', 'off');
 end
 
 %plot all identified features to debug
 %plot(handles.current_image,Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location(:,1)'-b_box(1)+bbox_delta,Cam(current_cam).features{timestep - Cam(current_cam).start_frame+1}.Location(:,2)'-b_box(2)+bbox_delta, 'om')
-h1 = plot(handles.current_image,feat_cands(1,pts2est)'-b_box(1)+bbox_delta,feat_cands(2,pts2est)'-b_box(2)+bbox_delta,'*y') ;
+h1 = plot(handles.current_image,feat_cands(1,pts2est)',feat_cands(2,pts2est)','*y') ;
 plot_obj = [plot_obj, h1];
 set(h1, 'HitTest', 'off');
 

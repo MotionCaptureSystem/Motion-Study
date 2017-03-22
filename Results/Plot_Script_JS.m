@@ -18,6 +18,9 @@ end
 
 plot_kin_chain(kinc, options, [1:5:length(kinc)]);
 xlabel('x (mm)',options.plot.fig_txt_props{:}); ylabel('y (mm)',options.plot.fig_txt_props{:}); zlabel('z (mm)',options.plot.fig_txt_props{:}); 
+H = reshape([camstruct.H],4,4,[]);
+CFPlot(H,0.005)
+
 axis tight
 axis equal
 h = gca;

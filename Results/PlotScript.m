@@ -22,7 +22,7 @@ cnt = 0;
 for pp = 1:npts
     cnt = cnt+1;
     feat_manip = features(3*(pp-1)+1:3*pp,:);
-    plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors2(cnt,:))
+    plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors(cnt,:))
 end
 
 H = zeros(4,4,ncam);

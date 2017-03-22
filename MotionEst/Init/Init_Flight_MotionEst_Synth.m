@@ -27,15 +27,15 @@ options.est.state_init      = [1.0e+03 *[1.2500,1.5000,1.0000],0,pi/8,pi/2,...
                                 60/180*pi,pi/8,...
                                 100*pi/180,pi/8]';
 %Plot Options
-options.plot.pts           = [1:5,6,8,10,12,14];
-options.plot.pts_orig      = [1:5,6,8,10,12,14];
+options.plot.pts           = [1:10];
+options.plot.pts_orig      = [1:10];
 options.plot.reprojframe   = 200;
 options.plot.tstart        = 1;
 options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tstart-1);
 options.plot.linespec1        = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
 options.plot.linespec2        = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
 options.plot.linespec3        = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
-options.plot.colors         =  {'r', 'g', 'b', 'c', 'm', 'k'};
+options.plot.colors         =  hsv(length(options.plot.pts));
 options.plot.colors2        = [255,255,255,128,0,0,0,0,0,128,255,255;0,128,255,255,255,255,255,128,0,0,0,0;0,0,0,0,0,128,255,255,255,255,255,128]'/255;
 options.plot.savepath       = 'C:\ShandongData2015\Batflight_07242015\Synthetic';
 options.plot.savefig        = 0;

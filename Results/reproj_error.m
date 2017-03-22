@@ -24,12 +24,14 @@ plot_start = options.plot.tstart;
 fig_num = options.plot.reprojframe;
 
 %% Transform inertial points into image space
-cnt = 0;
-for pp = pts
-    cnt = cnt+1;
-    %X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(pp-1)+1:3*pp,3:end);
-    X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(cnt-1)+1:3*cnt,3:end);
-end
+% cnt = 0;
+% for pp = pts
+%     cnt = cnt+1;
+%     %X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(pp-1)+1:3*pp,3:end);
+%     X_ukf(3*(cnt-1)+1:3*cnt,:)  = inertstruct.ukf.Features(3*(cnt-1)+1:3*cnt,3:end);
+% end
+
+X_ukf = inertstruct.ukf.Features(:,3:end);
 
 y_k_ukf         = zeros(2*ncam*npts,nsteps);
 lambdas_ukf     = zeros(npts,nsteps,ncam);

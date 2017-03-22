@@ -27,7 +27,8 @@ nmeas = ncam*length([link(links).MeasInds]);
 Pi0 = [1,0,0,0;0,1,0,0];
 z_hat = [0;0;1;0];
 if isempty(link(links(1)).BFvecs)
-    MeasStart = link(links(2)).MeasInds(1);         
+    MeasStart = link(links(2)).MeasInds(1);   
+    keyboard
 else
     MeasStart = link(links(1)).MeasInds(1);            
 end

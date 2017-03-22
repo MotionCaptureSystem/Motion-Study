@@ -1,7 +1,7 @@
 function [eststruct, options] = traj_estimation(Cam, options)
 nsteps = options.est.tstop-options.est.tstart+options.interp;
 % Will the estimator correspond features?
-y = input('Will the estimator correspond features?:','s');
+y = 'n';
 fprintf('Trajectory Estimation is Running .... \n')
 tic
 
@@ -42,7 +42,7 @@ if strcmp(options.est.type,'joint')
                 tDof = options.link(ll).tDof';
                 kinc(kk).link(ll).H=DHTransforms((~tDof).*q_lk+options.link(ll).thetas,...
                             options.link(ll).alphas,...
-                            (tDof)'.*q_lk + options.link(ll).disps,...
+                            (tDof).*q_lk + options.link(ll).disps,...
                             options.link(ll).offsets);
             elseif  strcmp(options.link(ll).IDkern,'YPR')
                 theta = q_lk(4:6);

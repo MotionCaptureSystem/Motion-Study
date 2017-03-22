@@ -255,10 +255,10 @@ for ii = 3:size(z,2) % for all timesteps
             end
         end
                        
-%         occlusion_ndx = find(isnan(z_gg_auto_all{gg}(:,ii))); % find ndx of occlusions
-%         z_minus_occlusions = z_gg_auto_all{gg}(:,ii); % create local msmt copy
-        occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
-        z_minus_occlusions = z_gg; % create local msmt copy
+         occlusion_ndx = find(isnan(z_gg_auto_all{gg}(:,ii))); % find ndx of occlusions
+         z_minus_occlusions = z_gg_auto_all{gg}(:,ii); % create local msmt copy
+        %occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
+        %z_minus_occlusions = z_gg; % create local msmt copy
         z_minus_occlusions(occlusion_ndx) = []; % strip occlusions out
         %from_cam(occlusion_ndx) = [];
         Z_bar(occlusion_ndx,:) = []; % strip out occluded measurements

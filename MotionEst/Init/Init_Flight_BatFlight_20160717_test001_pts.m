@@ -20,10 +20,10 @@ options.fs              = options.fs_c;
 options.est.cams            = [301,302,306,309:314,318,319,322,324,327,328,331,334,337,338,340,341];
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
-options.est.state_init      = zeros(3*length(options.pts),1);
+options.est.state_init      = repmat([-1.152,0.07934,-0.02997]',length(options.pts),1);
 
 %Plot Options
-options.plot.pts            = [1,2,3,4,6,7,11,12,14,15,17];
+options.plot.pts            = 1:length(options.pts);
 options.plot.pts_orig       = [105,141,100,93,87,89,91,46,54,49,56,44,58];
 options.plot.reprojframe    = 405;
 options.plot.tstart         = 6;
@@ -31,7 +31,7 @@ options.plot.tstop          = (options.tstop - options.tstart)-(options.plot.tst
 options.plot.linespec1      = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
 options.plot.linespec2      = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
 options.plot.linespec3      = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
-options.plot.colors         = {'r', 'g', 'b', 'c', 'm', 'k'};
+options.plot.colors         = hsv(length(options.plot.pts));
 options.plot.colors2        = [255,255,255,128,0,0,0,0,0,128,255,255;0,128,255,255,255,255,255,128,0,0,0,0;0,0,0,0,0,128,255,255,255,255,255,128]'/255;
 options.plot.savepath       = 'C:\Users\Matt\Documents\GitHub\SciTechPaper';
 options.plot.savefig        = 0;
@@ -45,6 +45,7 @@ options.plot.fig_txt_props  = {'FontName', 'Times New Roman', 'FontSize', 18, 'F
 %options.link = synthConfig.link(links);
 %options      = create_state_vec(options);
 %options      = create_meas_vec(options);
+options.nstate = length(options.pts)*3;
 
 %% Set the point associations and create a matrix of camera measurements
 % for cc = options.est.cams
