@@ -19,9 +19,9 @@ function [x_k, Rk] = mm_ConstVel_BBTrans(x_km1, x_km2, options, links, Rt_handle
 
 %x_k = 2*x_km1 - x_km2;
 x_k = x_km1;
-if ismember(1,links)
-    x_k(1:3) = 2*x_km1(1:3) - x_km2(1:3);
-end
+% if ismember(1,links)
+%     x_k(1:3) = 1.9*x_km1(1:3) - .9*x_km2(1:3);
+% end
 
 Rk = Rt_handle(links);
 %Rk = [zeros(num_states_comp,ind_max);

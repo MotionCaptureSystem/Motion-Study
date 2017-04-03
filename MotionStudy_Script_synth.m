@@ -11,7 +11,7 @@ addpath(['.',filesep,'MotionEst',filesep,'Init'],...
         ['.',filesep,'MotionEst',filesep,'Manifolds',filesep,'GPDM'],...
         ['.',filesep,'MotionEst',filesep,'Tracking'])
 %% Load the Camera Measurements
-options.path = 'C:\ShandongData2016\BatFlight_20160717\Test001';
+options.path = 'C:\Synthetic2016';
 a = load([options.path,filesep,'CamStruct.mat']);
 
 Cam(a.cams(1):a.cams(2)) = a.Cam;
@@ -19,14 +19,14 @@ clear a
 
 %% Load the Calibration
 fprintf('Loading Calibration Parameters ...\n')
-options.cams = [301, 302, 306, 309, 310, 311, 312, 313, 314, 318, 319, 322, 324, 327, 328, 331, 334, 337, 338, 340, 341];
-%cal_tech intrinsics
-%Cam = load_caltech_intrinsic(Cam, options, options.cams);
-%Svoboda Extrinsics
-options.cams_im2pts = options.cams;
-options.cams_cal    = options.cams;
-[options, Cam] = load_svoboda_cal5(Cam,options);
-options.ucs_size = norm(Cam(options.cams(1)).H(1:3))/100;
+options.cams = [1:10];
+% %cal_tech intrinsics
+% %Cam = load_caltech_intrinsic(Cam, options, options.cams);
+% %Svoboda Extrinsics
+% options.cams_im2pts = options.cams;
+% options.cams_cal    = options.cams;
+% [options, Cam] = load_svoboda_cal5(Cam,options);
+% options.ucs_size = norm(Cam(options.cams(1)).H(1:3))/100;
 
 %% Rectify and Synchronise Points
 Cam = rectify(Cam,options.cams);
@@ -34,11 +34,12 @@ options.fs_c = 120;
 Cam = sync_cams(Cam);
 %% Perform Stereo Triangulation
 options.stereo.cams = options.cams;
-options.stereo.pts = [1:250];
-options.stereo.tstart = 368;
+options.stereo.pts = [1:10];
+options.stereo.tstart = 1;
 options.stereo.dt = 1;
-options.stereo.tstop = 445;
+options.stereo.tstop = 100;
 options.plot.colors = hsv(length(options.stereo.pts));
+options.ucs_size = 20;
 
 fprintf('Running Stereo Triangulation ... \n')
 Stereo = StereoTriangulation_svob(Cam, options);
@@ -47,11 +48,11 @@ save([options.path,filesep,'StereoStruct.mat'],'Stereo')
 %% Load Initialization Options
 %[Cam,options] = Init_Flight_BatFlight_20160717_test001_flexBB(Cam,options);
 options.est.type        = 'joint';
-options.groups          = [1,2,3];
-options.link_names      = {'Body','Body Flex','Humerus','Radius','Wrist', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
+options.groups          = [1];
+options.link_names      = {'Body','Humerus','Radius','Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
 options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_b','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}'};
-options.tstart          = 368;       %Note: due to sync delay the first 
-options.tstop           = 452;       %Useable timestep will be tstart+1 
+options.tstart          = 1;       %Note: due to sync delay the first 
+options.tstop           = 100;       %Useable timestep will be tstart+1 
 options.dt              = 1;
 options.interp          = 1;         %1- data Was NOT interpolated, 0- otherwise;
 
@@ -60,24 +61,15 @@ options.default_dir     = pwd;
 options.fs              = options.fs_c;
 
 %Trajectory Estimation Options
-options.est.cams            = [301,302,306,309:314,318,319,322,324,327,328,331,334,337,338,340,341];
+options.est.cams            = [1:10];
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
-% options.est.state_init      = [-38.7,-92,13.12,...
-%                                201.9*pi/180,12.83*pi/180,10.84*pi/180,...
-%                                40*pi/180,...
-%                                75.49*pi/180,62.29*pi/180,-96.19*pi/180,...
-%                                -19.4*pi/180,...
-%                                -8.48*pi/180,...
-%                                -28.1*pi/180,48.39*pi/180,...
-%                                -35.25*pi/180,75.33*pi/180,...
-%                                23.56*pi/180,37.5*pi/180]';
 
 %Plot Options
-options.plot.pts_orig       = [[105,141], [100], [93],[87,89,91],[],[46,54],[49,56],[44,58]];
+options.plot.pts_orig       = [[1,2,3,4,5], [6], [7],[8],[9],[10]];
 options.plot.pts            = [1:length(options.plot.pts_orig)];
-options.plot.reprojframe    = 400;
+options.plot.reprojframe    = 50;
 options.plot.tstart         = 1;
 options.plot.tstop          = (options.tstop - options.tstart)-(options.plot.tstart-1);
 options.plot.linespec1      = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
@@ -89,26 +81,16 @@ options.plot.savefig        = 0;
 options.plot.saveim_reproj  = 0;
 options.plot.saveim_reproje = 0;
 options.plot.fig_txt_props  = {'FontName', 'Times New Roman', 'FontSize', 18, 'FontWeight', 'Bold'};
-
-start_pts = [];
-for ss = 1:length(Stereo)
-    if ~isnan(Stereo(ss).pts(1,2,options.plot.pts_orig(1)))
-        start_pts = [start_pts, Stereo(ss).pts(:,2,options.plot.pts_orig(1))];
-    end
-end
-sum_of_start = nanmedian(start_pts,2);
-options.est.state_init      = [sum_of_start(3),sum_of_start(2),sum_of_start(1),...
-                               270*pi/180,230*pi/180,-90*pi/180,...
-                               40*pi/180,...
-                               75.49*pi/180,62.29*pi/180,-96.19*pi/180,...
-                               -19.4*pi/180,...
-                               -8.48*pi/180,...
-                               -28.1*pi/180,48.39*pi/180,...
-                               -35.25*pi/180,75.33*pi/180,...
-                               23.56*pi/180,37.5*pi/180]';
-
+options.est.state_init      = [1250,1500,1000,...
+                               0,0,pi/2,...
+                               110*pi/180,-120*pi/180,-90*pi/180,...
+                               0,...
+                               30*pi/180,-pi/8,...
+                               70/180*pi,-pi/8,...
+                               120*pi/180,-pi/8]';
+                           
 % Define the Skeleton
-SkeletonDefn_BatFlight_20160717_test001_flexBB
+SkeletonDefn3
 links        = get_group_links(synthConfig.link,options.groups);
 options.link = synthConfig.link(links);
 options      = create_state_vec(options);
@@ -116,7 +98,7 @@ options      = create_meas_vec(options);
 
 % Set the point associations and create a matrix of camera measurements
 for cc = options.est.cams
-    Cam(cc).pt_assoc = {[105,141], [100], [93],[87,89,91],[],[46,54],[49,56],[44,58]};
+    Cam(cc).pt_assoc = {[1,2,3,4,5],[6],[7],[8],[9],[10]};
 end
 options.est.meas = create_meas_matrix(Cam, options);
 

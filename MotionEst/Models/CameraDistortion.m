@@ -1,5 +1,6 @@
 function xp = CameraDistortion(x, camstruct)
 
+xp = NaN*zeros(size(x));
 cams = [];
 for cc = 1:length(camstruct)
    if ~isempty(camstruct(cc).pts)
@@ -11,7 +12,6 @@ ncam = length(cams);
 npts = length(x)/(2*ncam);
 
     for cc = 1:ncam         %for each camera
-        K = camstruct(cams(cc)).K;
         K_dist = camstruct(cams(cc)).K_dist;
         dist_c = camstruct(cams(cc)).kc_dist;
         for pp = 1:npts

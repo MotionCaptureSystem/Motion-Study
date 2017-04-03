@@ -207,63 +207,76 @@ for ii = 3:size(z,2) % for all timesteps
         from_cam = zeros(2*npts_l*ncam,1);
         for cc = 1:ncam
             %Determine the time index for this camera
-            t_cam = t_world(ii)+floor(camstruct(cc).sync_del*119.88)-camstruct(cc).start_frame+1;
+            t_cam = t_world(ii)-camstruct(cc).start_frame+1;
             %Get the ground truth correspondences
             z_gg(2*npts_l*(cc-1)+(1:length([meas_inds_prev,meas_inds])),1) = z(nmeas*(cc-1)+[meas_inds_prev,meas_inds],ii);
             
-            %Read the image from this timestep for which correspondence
-            %will be computed
-            im_k   = imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)),'.png']);
-            if size(im_k,3)>1
-            im_k   = rgb2gray(im_k);
-            end
-            %read the image from the previous timestep
-            im_km1 = imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)-1),'.png']);
-            if size(im_km1,3)>1
-            im_km1 = rgb2gray(im_km1);
-            end
-            
-            %Get the point numbers to correspond
-            if strcmp(options.est.type,'joint') %joint estimation point numbers are based on the pt association
-                pt_nums = [camstruct(cc).pt_assoc{[links_prev,links]}];
-            else %point estimation point numbers are declared in options. 
-                pt_nums = options.pts;
-            end
-            
-            phi_hat = CameraDistortion(reshape(z_hat_camcol(:,:,cc),[],1),camstruct(cc));   %estimated point locations
-            phi     = reshape(camstruct(cc).pts(:,t_cam,pt_nums),[],1); %uncorresponded features
-            phi_km1 = reshape(camstruct(cc).pts(:,t_cam-1,pt_nums),[],1); %previous corresponded features 
-            %Run the optical flow correspondence
-            phi_corr = corresp_optflow(phi_hat,phi,phi_km1,im_km1,im_k);
-            %Create a figure to display the correspondences
-            z_gg_auto_all{gg}(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,ii) = phi_corr;
-            if gg == options.groups(end)
-                n_correct(cc,ii) = sum(phi_corr==phi)/2;
-            end
-            if 0%any(~isnan(phi)) && gg == 3
-                figure
-                imshow(im_k)
-                hold on
-                plot(phi_km1(1:2:end),phi_km1(2:2:end),'og') 
-                plot(phi_hat(1:2:end),phi_hat(2:2:end),'+c')
-                plot(phi(1:2:end),phi(2:2:end),'.m')
-
-                for pp = 1:length(phi_hat)/2
-                   plot([phi_hat(2*(pp-1)+1);phi_corr(2*(pp-1)+1)], [phi_hat(2*pp);phi_corr(2*pp)],'-y')
+            if ii>6
+                %Read the image from this timestep for which correspondence
+                %will be computed
+                im_k   = imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)),'.png']);
+                if size(im_k,3)>1
+                im_k   = rgb2gray(im_k);
                 end
-                title(sprintf('Cam: %i Timestep: %i',cc,t_world(ii)))
+                %read the image from the previous timestep
+                im_km1 = imread([options.path,filesep,'Cam',num2str(options.est.cams(cc)),filesep,num2str(t_world(ii)-1),'.png']);
+                if size(im_km1,3)>1
+                im_km1 = rgb2gray(im_km1);
+                end
+
+                %Get the point numbers to correspond
+                if strcmp(options.est.type,'joint') %joint estimation point numbers are based on the pt association
+                    pt_nums = [camstruct(cc).pt_assoc{[links_prev,links]}];
+                else %point estimation point numbers are declared in options. 
+                    pt_nums = options.pts;
+                end
+
+                phi_hat = CameraDistortion(z_hat(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc),camstruct(cc));   %estimated point locations
+                %phi     = reshape(camstruct(cc).pts(:,t_cam,pt_nums),[],1); %uncorresponded features
+                
+                phi = reshape(camstruct(cc).features{t_cam}.Location',[],1);
+                phi_km1 = reshape(camstruct(cc).pts(:,t_cam-1,pt_nums),[],1); %previous corresponded features 
+                %Run the optical flow correspondence
+                if ~isempty(phi)
+                    phi_corr = corresp_optflow(phi_hat,phi,phi_km1,im_km1,im_k);
+                else
+                    phi_corr = NaN*ones(size(phi_hat));
+                end
+                phi_corr_rect = rm_distortion(phi_corr,camstruct(cc).K_dist, camstruct(cc).fc_dist,...
+                                camstruct(cc).cc_dist, camstruct(cc).alpha_c_dist, camstruct(cc).kc_dist);
+                z_gg_auto_all{gg}(2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*(cc-1)+1:2*length([camstruct(cc).pt_assoc{[links_prev,links]}])*cc,ii) = phi_corr_rect;
+%                 if gg == options.groups(end)
+%                     n_correct(cc,ii) = sum(phi_corr==phi)/2;
+%                 end
+                %Create a figure to display the correspondences
+                if 0%any(~isnan(phi)) && gg == 3
+                    figure
+                    imshow(im_k)
+                    hold on
+                    plot(phi_km1(1:2:end),phi_km1(2:2:end),'og') 
+                    plot(phi_hat(1:2:end),phi_hat(2:2:end),'+c')
+                    plot(phi(1:2:end),phi(2:2:end),'.m')
+
+                    for pp = 1:length(phi_hat)/2
+                       plot([phi_hat(2*(pp-1)+1);phi_corr(2*(pp-1)+1)], [phi_hat(2*pp);phi_corr(2*pp)],'-y')
+                    end
+                    title(sprintf('Cam: %i Timestep: %i',cc,t_world(ii)))
+                end
             end
         end
-                       
-         occlusion_ndx = find(isnan(z_gg_auto_all{gg}(:,ii))); % find ndx of occlusions
-         z_minus_occlusions = z_gg_auto_all{gg}(:,ii); % create local msmt copy
-        %occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
-        %z_minus_occlusions = z_gg; % create local msmt copy
+        
+        if ii<7
+            occlusion_ndx = find(isnan(z_gg)); % find ndx of occlusions
+            z_minus_occlusions = z_gg; % create local msmt copy
+        else
+             occlusion_ndx = find(isnan(z_gg_auto_all{gg}(:,ii))); % find ndx of occlusions
+             z_minus_occlusions = z_gg_auto_all{gg}(:,ii); % create local msmt copy
+        end
         z_minus_occlusions(occlusion_ndx) = []; % strip occlusions out
         %from_cam(occlusion_ndx) = [];
         Z_bar(occlusion_ndx,:) = []; % strip out occluded measurements
         z_hat(occlusion_ndx,:) = [];
-
+        
         [~, Qt] = h_handle(full_mu, ii);
         %Qt = Qt((end-length(meas_inds)+1):end,(end-length(meas_inds)+1):end);
         del_Z = (Z_bar - repmat(z_hat,1,size(Z_bar,2)));
@@ -311,7 +324,7 @@ for ii = 3:size(z,2) % for all timesteps
 end
 
 outstruct.z_auto_corr = z_gg_auto_all;
-outstruct.n_correct = n_correct;
+%outstruct.n_correct = n_correct;
 
 if nargout > 2
     varargout{1} = outstruct;

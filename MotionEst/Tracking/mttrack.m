@@ -5,13 +5,13 @@ function [y,x]=mttrack(G,y,x,yp0,xp0)
 gx=[-1 0 1];
 gy=gx';
 u(2,1)=1;
-window = 24;
+window = 40;
 sigma = window/.5;
 sz = window*2+1;    % length of gaussFilter vector
 x_vec = linspace(-sz / 2, sz / 2, sz);
 gaussFilter = exp(-x_vec .^ 2 / (2 * sigma ^ 2));
 gaussFilter = gaussFilter / sum (gaussFilter); % normalize
-weights = diag(gaussFilter);
+weights = diag(gaussFilter)/max(gaussFilter);
 %weights = fspecial('gaussian',2*window+1,window/4);
 pt=length(y);
 
@@ -22,9 +22,9 @@ for j=1 %number of frames to compute optical flow between
     imxx=imx.^2;
     imyy=imy.^2;
     imxy=imx.*imy;
-    %figure
-%     subplot(2,1,1); imagesc(G{j});
-    %imagesc(G{j+1});
+%     figure
+% %     subplot(2,1,1); imagesc(G{j});
+%     imagesc(G{j+1});
 for i=1:pt %at which points
     if ~isnan(x(i,j)) && ~isnan(y(i,j))
         u(1,1)=10;
@@ -35,12 +35,11 @@ for i=1:pt %at which points
             y(i,j+1)=NaN;%y(i,j);
             x(i,j+1)=NaN;%x(i,j);
         else
-            
-            
+                       
             xp=xp0(i,j);
             yp=yp0(i,j);
 
-            %hold on; plot(xp,yp,'+g')
+%             hold on; plot(xp,yp,'+g')
             
             [Xq1,Yq1]=meshgrid(x(i,j)-window:1:x(i,j)+window,y(i,j)-window:1:y(i,j)+window);
             Vq1=interp2(G{j},Xq1,Yq1);
@@ -67,7 +66,7 @@ for i=1:pt %at which points
                 xp = xp+u(1);
                 yp = yp+u(2);
                 
-                %hold on; plot(xp,yp,'.m')
+%                 hold on; plot(xp,yp,'.m')
 %               subplot(2,1,2); hold on; plot(xp,yp,'.m')
                 %pause
                 if xp<window+1 || xp>w-window || yp<window+1 || yp>h-window
