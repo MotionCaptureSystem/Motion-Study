@@ -504,7 +504,7 @@ if proj_epi
                 %determine the epipolar line parameters
                 epi_line = epipolar_line(Cam(cc).H,Cam(current_cam).H,Cam(cc).K\[p_r;1]);
                 %project bounding box into frame
-                b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame+1,:); %determine the bounding box
+                b_box = [1,1,1279,719]; %determine the bounding box
                 pts_bbox = [b_box(1:2)', b_box(1:2)' + b_box(3:4)';ones(1,2)];
                 
                 pts_bbox_ud(:,1) = Cam(current_cam).K\[rm_distortion(pts_bbox(1:2,1),Cam(current_cam).K_dist,Cam(current_cam).fc_dist,Cam(current_cam).cc_dist,Cam(current_cam).alpha_c_dist,Cam(current_cam).kc_dist);1];%rm_distortion(x_p, K, fc, prin_p, skew, dist_c)
@@ -870,7 +870,7 @@ for pt = pts2est
         l = epipolar_line(Cam(cc).H, Cam(current_cam).H,Cam(cc).K\[phi;1]);
         lines = [lines;l];
     end
-    b_box = Cam(current_cam).b_box(timestep - Cam(current_cam).start_frame +1,:);
+    b_box = [1,1,1279,719];
     if size(lines,1)>=2
        kc = Cam(current_cam).kc_dist;
 

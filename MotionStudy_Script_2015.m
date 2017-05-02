@@ -11,7 +11,7 @@ addpath(['.',filesep,'MotionEst',filesep,'Init'],...
         ['.',filesep,'MotionEst',filesep,'Manifolds',filesep,'GPDM'],...
         ['.',filesep,'MotionEst',filesep,'Tracking'])
 %% Load the Camera Measurements
-options.path = 'C:\ShandongData2016\BatFlight_20160717\Test001';
+options.path = 'C:\ShandongData2015\Batflight_07242015_copy\Test004_20161007';
 a = load([options.path,filesep,'CamStruct.mat']);
 
 Cam(a.cams(1):a.cams(2)) = a.Cam;
@@ -19,25 +19,23 @@ clear a
 
 %% Load the Calibration
 fprintf('Loading Calibration Parameters ...\n')
-options.cams = [301, 302, 306, 309, 310, 311, 312, 313, 314, 318, 319, 322, 324, 327, 328, 331, 334, 337, 338, 340, 341];
-%cal_tech intrinsics
-%Cam = load_caltech_intrinsic(Cam, options, options.cams);
-%Svoboda Extrinsics
+options.cams        = [301,302,303,304,305,307,308,310,312,317,318,320,321,325,333];
 options.cams_im2pts = options.cams;
-options.cams_cal    = options.cams;
-% [options, Cam] = load_svoboda_cal5(Cam,options);
-options.ucs_size = norm(Cam(options.cams(1)).H(1:3))/100;
+options.cams_cal    = [301,302,303,309,310,312,317,318,320,321,325,333];
+[Cam]               = load_caltech_intrinsic(Cam,options,options.cams);
+[options, Cam]      = load_svoboda_cal4(Cam,options);
+options.ucs_size    = norm(Cam(options.cams(1)).H(1:3))/100;
 
 %% Rectify and Synchronise Points
 Cam = rectify(Cam,options.cams);
 options.fs_c = 120;
-Cam = sync_cams(Cam);
+Cam = sync_cams(Cam, options);
 %% Perform Stereo Triangulation
 options.stereo.cams = options.cams;
 options.stereo.pts = [1:250];
-options.stereo.tstart = 368;
+options.stereo.tstart = 390;
 options.stereo.dt = 1;
-options.stereo.tstop = 452;
+options.stereo.tstop = 425;
 options.plot.colors = hsv(length(options.stereo.pts));
 
 fprintf('Running Stereo Triangulation ... \n')
@@ -48,12 +46,10 @@ save([options.path,filesep,'StereoStruct.mat'],'Stereo')
 %[Cam,options] = Init_Flight_BatFlight_20160717_test001_flexBB(Cam,options);
 options.est.type        = 'joint';
 options.groups          = [1,2,3];
-options.link_names      = {'Body','Body Flex','R Humerus','R Radius','R Wrist', 'R Metacarpal 3', 'R Metacarpal 4','R Metacarpal 5','L Humerus','L Radius','L Wrist', 'L Metacarpal 3', 'L Metacarpal 4','L Metacarpal 5'};
-options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_b','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}','\theta_{12}',...
-                            '\theta_{13}','\theta_{14}','\theta_{15}','\theta_{16}','\theta_{17}','\theta_{18}','\theta_{19}','\theta_{20}','\theta_{21}','\theta_{22}'};
-                        
-options.tstart          = 368;       %Note: due to sync delay the first 
-options.tstop           = 452;       %Useable timestep will be tstart+1 
+options.link_names      = {'Body','Humerus','Radius','Wrist', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
+options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}'};
+options.tstart          = 390;       %Note: due to sync delay the first 
+options.tstop           = 425;       %Useable timestep will be tstart+1 
 options.dt              = 1;
 options.interp          = 1;         %1- data Was NOT interpolated, 0- otherwise;
 
@@ -62,41 +58,15 @@ options.default_dir     = pwd;
 options.fs              = options.fs_c;
 
 %Trajectory Estimation Options
-options.est.cams            = [301,302,306,309:314,318,319,322,324,327,328,331,334,337,338,340,341];
+options.est.cams            = options.cams;
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
 
-% Define the Skeleton
-SkeletonDefn_BatFlight_20160717_test001_flexBB
-links        = get_group_links(synthConfig.link,options.groups);
-options.link = synthConfig.link(links);
-options      = create_state_vec(options);
-options      = create_meas_vec(options);
-
-% Set the point associations and create a matrix of camera measurements
-for ll = 1:length(synthConfig.link)
-    if ll == 1
-        pt_assoc{ll} = synthConfig.link(ll).pt_nums;
-        continue;
-    end
-    if length(unique(synthConfig.link(ll).pt_nums))~=length(synthConfig.link(ll).pt_nums) 
-        pt_assoc{ll} = [];
-    else
-        pt_assoc{ll} = synthConfig.link(ll).pt_nums(1:end-1);
-    end
-end
-
-for cc = options.est.cams
-    %Cam(cc).pt_assoc = {[105,141], [100], [93],[87,89,91],[],[46],[41,56],[44,58]};
-    Cam(cc).pt_assoc = pt_assoc;
-end
-options.est.meas = create_meas_matrix(Cam, options);
-
 %Plot Options
-options.plot.pts_orig       = [pt_assoc{links}];
-options.plot.pts            = [pt_assoc{links}];
-options.plot.reprojframe    = 400;
+options.plot.pts_orig       = [[1,4,5], [6], [8,7],[],[10,9],[14,13],[17]];
+options.plot.pts            = [1:length(options.plot.pts_orig)];
+options.plot.reprojframe    = 405;
 options.plot.tstart         = 1;
 options.plot.tstop          = (options.tstop - options.tstart)-(options.plot.tstart-1);
 options.plot.linespec1      = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
@@ -116,22 +86,28 @@ for ss = 1:length(Stereo)
     end
 end
 sum_of_start = nanmedian(start_pts,2);
-options.est.state_init      = [0,-50,0,...
-                               -135*pi/180,0,-180*pi/180,...
-                               40*pi/180,...
-                               45*pi/180,   90*pi/180,  -90*pi/180,...
-                               .001,...
-                               .001,...
-                               .001,   .001,...
-                               .001,   .001,...
-                               5*pi/180,   5*pi/180]';%,...
-%                                0,0,0,...
-%                                0,...
-%                                0,...
-%                                0,0,...
-%                                0,0,...
-%                                0,0]';
-                                    
+options.est.state_init      = [sum_of_start(3),sum_of_start(2),sum_of_start(1),...
+                               0*pi/180,0*pi/180,-180*pi/180,...
+                               -270*pi/180,-pi/2,-60*pi/180,...
+                                30/180*pi,...
+                                -75*pi/180,...
+                                55*pi/180,20*pi/180,...
+                                pi/2,20*pi/180,...
+                                100/180*pi,-20*pi/180]';
+
+% Define the Skeleton
+SkeletonDefn_BatFlight_20150724_test004_wrist
+links        = get_group_links(synthConfig.link,options.groups);
+options.link = synthConfig.link(links);
+options      = create_state_vec(options);
+options      = create_meas_vec(options);
+
+% Set the point associations and create a matrix of camera measurements
+for cc = options.est.cams
+    Cam(cc).pt_assoc = {[1,4,5], [6], [8,7],[],[10,9],[14,13],[17]};
+end
+options.est.meas = create_meas_matrix(Cam, options);
+
 % Filter Options - UKF
 %State matrix with all points
 options.est.x_km1 = options.est.state_init;
@@ -150,7 +126,8 @@ options.est.Rt_handle          = @(ll)        calc_Rt_joint(ll,options.link);
 %   orientation of the body in 3D space (comes from the upper-left of the H
 %   matrix at every timestep)
 options.est.msmt_model = @(x, t) CamNet_JS(x, Cam, options);
-%%Run the Estimator
+
+%% Run the Estimator
 %[EstStruct, options] = traj_estimation(Cam(options.est.cams), options);
 
 nsteps = options.est.tstop-options.est.tstart+options.interp;
@@ -228,7 +205,7 @@ elseif strcmp(options.est.type,'point')
     eststruct.ukf.Features = X_ukf;
 end
 
-%%Plot State Results
+%% Plot State Results
 plot_states(Cam,eststruct,options)
 
 %% Reprojection

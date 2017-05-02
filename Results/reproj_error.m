@@ -44,7 +44,11 @@ for c = 1:ncam
     %camstruct(c).dist_c = kc;
     t = options.tstart-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c):dt:options.tstop-camstruct(c).start_frame+1+floor(camstruct(c).sync_del*fs_c);
     for pp = 1:npts
-        meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = camstruct(c).pts_sync(:,t,options.plot.pts_orig(pp));
+        if options.plot.pts_orig(pp) <= size(camstruct(c).pts_sync,3)
+            meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = camstruct(c).pts_sync(:,t,options.plot.pts_orig(pp));
+        else
+            meas((c-1)*2*npts+2*(pp-1)+1:(c-1)*2*npts+2*pp,:) = NaN*ones(2,length(t));
+        end
     end
 end
 
@@ -179,7 +183,7 @@ for c = 1:ncam
         
         title(['Cam ',num2str(c)], fig_txt_props{:})
         %set(handle, 'Color', 'w', 'FontSize', 20)
-        %axis([camstruct(c).b_box(1), camstruct(c).b_box(1)+camstruct(c).b_box(3), camstruct(c).b_box(2), camstruct(c).b_box(2)+camstruct(c).b_box(4)])
+        
         frame_struct = getframe;
         
         %Do the figures need to be saved?

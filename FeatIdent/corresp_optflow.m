@@ -26,7 +26,7 @@ pts = reshape(phi_hat,2,[]);
 %format the current locations appropriately
 pts_km1 = reshape(phi_km1,2,[]);
 %compute the new predicted location using optical flow
-[y,x]=mttrack(G,[pts_km1(2,:)',zeros(size(pts_km1,2),1)],[pts_km1(1,:)',zeros(size(pts_km1,2),1)],[pts(2,:)',zeros(size(pts,2),1)],[pts(1,:)',zeros(size(pts,2),1)]);
+[y,x]   = mttrack(G,[pts_km1(2,:)',zeros(size(pts_km1,2),1)],[pts_km1(1,:)',zeros(size(pts_km1,2),1)],[pts(2,:)',zeros(size(pts,2),1)],[pts(1,:)',zeros(size(pts,2),1)]);
 %[y,x]=mttrack(G,[pts_km1(2,:)',zeros(size(pts_km1,2),1)],[pts_km1(1,:)',zeros(size(pts_km1,2),1)],[pts_km1(2,:)',zeros(size(pts_km1,2),1)],[pts_km1(1,:)',zeros(size(pts_km1,2),1)]);
 %reformat the new prediction
 phi_hat = [x(:,2)';y(:,2)'];

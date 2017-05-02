@@ -107,12 +107,12 @@ fprintf('---------------------------------------------------\n')
 %% Create Body Fixed Vectors
 %specifiy the points which are on each link
 synthConfig.link(1).pt_nums = [4,1,5];
-synthConfig.link(2).pt_nums = [5,6];
-synthConfig.link(3).pt_nums = [6,7,8];
+synthConfig.link(2).pt_nums = [6,5];
+synthConfig.link(3).pt_nums = [8,7,6];
 synthConfig.link(4).pt_nums = [8,8];
-synthConfig.link(5).pt_nums = [8,9,10];
-synthConfig.link(6).pt_nums = [8,13,14];
-synthConfig.link(7).pt_nums = [8,17];
+synthConfig.link(5).pt_nums = [10,9,8];
+synthConfig.link(6).pt_nums = [14,13,8];
+synthConfig.link(7).pt_nums = [17,8];
 %load the stereo triangulation data
 load([options.path,filesep,'StereoStruct.mat']);
 npair = length(Stereo);         %determine the number of cameras pairs
@@ -141,12 +141,12 @@ for ll = 1:length(synthConfig.link)
         vectors = 1*[x_hat,y_hat,z_hat]'*mean_delta;
     elseif ll==2
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = 1.1*[0,-norm(mean_delta(:,2)),0]';
+        vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
         %vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
     elseif ll==3
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = 1.2*[-norm(mean_delta(:,2)),0,0]';
-        vectors(:,3) = 1.2*[-norm(mean_delta(:,3)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll == 4;
@@ -154,19 +154,19 @@ for ll = 1:length(synthConfig.link)
         vectors(:,2) = [0,0,0]';
     elseif ll==5
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = .8*[-norm(mean_delta(:,2)),0,0]';
-        vectors(:,3) = 1.15*[-norm(mean_delta(:,3)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==6
         vectors(:,1) = [0,0,0]';
-        vectors(:,2) = 1.2*[-norm(mean_delta(:,2)),0,0]';
-        vectors(:,3) = 1.2*[-norm(mean_delta(:,3)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     elseif ll==7
         vectors(:,1) = [0,0,0]';
-       vectors(:,2) = 1.3*[-norm(mean_delta(:,2)),0,0]';
+       vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
 %         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
         %vectors(:,3) = 1.15*[-norm(mean_delta(:,3)),0,0]';
     end
@@ -263,3 +263,9 @@ for ll = 1:length(synthConfig.link)
     end
 end
 fprintf('---------------------------------------------------\n')
+
+
+figure
+plot_kin_chain(synthConfig,synthConfig,1)
+
+axis equal

@@ -11,3 +11,5 @@ for gg = group
         end
     end
 end
+
+links = sort(links);

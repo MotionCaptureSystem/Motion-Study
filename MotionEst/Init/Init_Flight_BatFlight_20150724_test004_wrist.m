@@ -1,6 +1,7 @@
 function [camstruct,options] = Init_Flight_BatFlight_20150724_test004_wrist(camstruct,options)
 %% --------------------------Set Options----------------------------------
 %Import Options
+options.est.type        = 'joint';
 options.groups          = [1,2,3];
 options.link_names      = {'Body','Humerus','Radius','Wrist', 'Metacarpal 3', 'Metacarpal 4','Metacarpal 5'};
 options.dof_names       = {'X', 'Y', 'Z', '\theta_x', '\theta_y','\theta_z','\theta_1','\theta_2','\theta_3','\theta_4','\theta_5','\theta_6','\theta_7','\theta_8','\theta_9','\theta_{10}','\theta_{11}'};
@@ -28,7 +29,7 @@ options.est.state_init      = [360,1074,-307,0*pi/180,0*pi/180,-180*pi/180,...
                                 100/180*pi,-20*pi/180]';
 
 %Plot Options
-options.plot.pts           = [1,2,3,4,6,7,11,12,14,15,17];
+options.plot.pts           = [1:11];
 options.plot.pts_orig      = [4,1,5,6,8,7,10,9,14,13,17];
 options.plot.reprojframe   = 405;
 options.plot.tstart        = 6;
@@ -36,7 +37,7 @@ options.plot.tstop         = (options.tstop - options.tstart)-(options.plot.tsta
 options.plot.linespec1        = {'.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g','^-r','^-b','^-g', '^-m','^-k','^-c','^--r','^--b','^--g'};
 options.plot.linespec2        = {'+-r','+-b','+-g', '+-m','+-k','+-c','+--r','+--b','+--g','o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g'};
 options.plot.linespec3        = {'o-r','o-b','o-g', 'o-m','o-k','o-c','o--r','o--b','o--g','.-r','.-b','.-g', '.-m','.-k','.-c','.--r','.--b','.--g'};
-options.plot.colors         =  {'r', 'g', 'b', 'c', 'm', 'k'};
+options.plot.colors         =  hsv(length(options.plot.pts));
 options.plot.colors2        = [255,255,255,128,0,0,0,0,0,128,255,255;0,128,255,255,255,255,255,128,0,0,0,0;0,0,0,0,0,128,255,255,255,255,255,128]'/255;
 options.plot.savepath       = 'C:\Users\Matt\Documents\GitHub\SciTechPaper';
 options.plot.savefig        = 0;

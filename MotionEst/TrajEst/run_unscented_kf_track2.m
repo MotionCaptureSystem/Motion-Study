@@ -249,13 +249,13 @@ for ii = 3:size(z,2) % for all timesteps
 %                     n_correct(cc,ii) = sum(phi_corr==phi)/2;
 %                 end
                 %Create a figure to display the correspondences
-                if 0%any(~isnan(phi)) && gg == 3
-                    figure
-                    imshow(im_k)
-                    hold on
-                    plot(phi_km1(1:2:end),phi_km1(2:2:end),'og') 
-                    plot(phi_hat(1:2:end),phi_hat(2:2:end),'+c')
-                    plot(phi(1:2:end),phi(2:2:end),'.m')
+                if 1%any(~isnan(phi)) && gg == 3
+%                     figure
+%                     imshow(im_k)
+%                     hold on
+                    plot(phi_km1(1:2:end),phi_km1(2:2:end),'ob') 
+                    plot(phi_hat(1:2:end),phi_hat(2:2:end),'og')
+                    plot(phi(1:2:end),phi(2:2:end),'*r')
 
                     for pp = 1:length(phi_hat)/2
                        plot([phi_hat(2*(pp-1)+1);phi_corr(2*(pp-1)+1)], [phi_hat(2*pp);phi_corr(2*pp)],'-y')

@@ -219,9 +219,12 @@ for ii = 3:size(z,2) % for all timesteps
         del_Sig = Chi_bar - repmat(full_mu,1,size(Chi_bar,2));
         S = zeros(length(z_hat), length(z_hat));
         Sig_xz = zeros(length(full_mu), length(z_hat));
+        %figure
         for ndx = 1:size(del_Z,2)
             S = S + wc(ndx)*del_Z(:,ndx)*del_Z(:,ndx)';
             Sig_xz = Sig_xz + wc(ndx)*del_Sig(:,ndx)*del_Z(:,ndx)';
+%             spy(Sig_xz);
+%             pause         
         end
         
         Qt(occlusion_ndx,:) = [];  % strip occlusion rows out

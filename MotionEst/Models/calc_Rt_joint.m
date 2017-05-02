@@ -13,7 +13,7 @@ Rt = zeros(nDof,nDof);
 %%%%multiple links*******************
 for dof = 1:nDof
     if tDof(dof)
-        Rt(dof,dof) = 0.001^2;           %assume position uncertainty of 10mm
+        Rt(dof,dof) = 10^2;           %assume position uncertainty of 10mm
     else
         Rt(dof,dof) = (5*pi/180)^2;     %assume position uncertainty equivalent to 5 degrees
     end

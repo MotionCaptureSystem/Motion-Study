@@ -27,7 +27,11 @@ if strcmp(options.est.type, 'joint')
                     meas(indx,:) = NaN*ones(2,nsteps);
                 else                                            %Otherwize, copy the points
                     indx = options.nmeas*(cam_cnt-1)+link(ll).MeasInds(ii:ii+1);
-                    meas(indx,:) = camstruct(cc).pts_sync(:,time_vec,point); 
+                    if point<=size(camstruct(cc).pts_sync,3)
+                        meas(indx,:) = camstruct(cc).pts_sync(:,time_vec,point); 
+                    else
+                        meas(indx,:) = NaN*ones(length(indx),length(time_vec));
+                    end
                 end
             end
         end
