@@ -1,7 +1,12 @@
-function plot_kin_chain(kinc,kinConfig, tsteps)
+function plot_kin_chain(kinc,kinConfig, tsteps, varargin)
 %PLOT_KIN_CHAIN     -plots the links of the kinematic chain defined by the
 %structure CHAIN at the timesteps TSTEPS.  The kinematic chain will be
 %plotted in the zero basis of link 1.
+if nargin>3
+    flag = varargin{1};
+else 
+    flag = 0;
+end
 hold on
 nlinks = length(kinConfig.link);
 pt_con_last = [];
@@ -12,7 +17,7 @@ for ll = nlinks:-1:1
         n_bf_pts = size(points,2);
         for tt = tsteps
             H1 = hnode2node(kinc(tt),kinConfig,1,ll);
-            CFPlot(H1,norm(H1(1:3,4))/1000)
+            CFPlot(H1,10)
             X = [eye(3,3),zeros(3,1)]*H1*[points;ones(1,n_bf_pts)];
             
             if ~isempty(kinConfig.link(ll).ConPt)
@@ -26,15 +31,16 @@ for ll = nlinks:-1:1
                 con_pt = [eye(3,3),zeros(3,1)]*H*[con_pt;1];
                 X = [X(:,1:end-1,1),con_pt,X(:,end)];
             end
-            if ~isempty(kinConfig.link(ll).parent)
-                numbers = [kinConfig.link(ll).pt_nums,kinConfig.link(kinConfig.link(ll).parent).pt_nums(kinConfig.link(ll).ConPt)];
-            else
-                numbers = kinConfig.link(ll).pt_nums;
+            if flag
+                if ~isempty(kinConfig.link(ll).parent)
+                    numbers = [kinConfig.link(ll).pt_nums,kinConfig.link(kinConfig.link(ll).parent).pt_nums(kinConfig.link(ll).ConPt)];
+                else
+                    numbers = kinConfig.link(ll).pt_nums;
+                end
+                for pp = 1:size(X,2)-1
+                    text(X(1,pp)',X(2,pp)',X(3,pp)',num2str(numbers(pp)))
+                end
             end
-            for pp = 1:size(X,2)-1
-                text(X(1,pp)',X(2,pp)',X(3,pp)',num2str(numbers(pp)))
-            end
-            
             if tt==tsteps(1)
                 linespec = 'o-m';
             else

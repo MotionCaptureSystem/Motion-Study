@@ -1,4 +1,4 @@
-function Rt = calc_Rt_joint(ll, link)
+function Rt = calc_Rt_joint(link_nums, link)
 % This function generates the additive uncertainty for the motion model in
 % joint space.  The output is a [nDof X nDof] covariance matrix where nDof
 % is the number of degrees of freedom of the link LL for which Rt is
@@ -6,16 +6,35 @@ function Rt = calc_Rt_joint(ll, link)
 % the covarience matric
 
 %units are radians for angle and mm for distance
-nDof = sum([link(ll).nDof]);
-tDof = [link(ll).tDof];
-Rt = zeros(nDof,nDof);
+tot_nDof = sum([link(link_nums).nDof]);
+Rt   = zeros(tot_nDof,tot_nDof);
 %%%%Future, consider increasing uncertainty inteligently for groups with
 %%%%multiple links*******************
-for dof = 1:nDof
-    if tDof(dof)
-        Rt(dof,dof) = 10^2;           %assume position uncertainty of 10mm
+nDof = 0;
+for ll = link_nums
+    
+    inds = nDof+1:nDof + link(ll).nDof;
+    if ll == 1
+        sigmas = [10^2*ones(1,3),(0.5*pi/180)^2*ones(1,link(ll).nDof-3)];
+        Rt(inds,inds) = diag(sigmas);
+
+    elseif regexp(link(ll).nnames, '.*Met.*')
+
+         Rt(inds,inds) = (3*pi/180)^2*eye(link(ll).nDof);
+
+    elseif  regexp(link(ll).nnames, '.*phal.*')
+
+         Rt(inds,inds) = (8*pi/180)^2*eye(link(ll).nDof);
+         
+    elseif  regexp(link(ll).nnames, '.*Wrist.')
+
+         Rt(inds,inds) = (2*pi/180)^2*eye(link(ll).nDof);
+
     else
-        Rt(dof,dof) = (5*pi/180)^2;     %assume position uncertainty equivalent to 5 degrees
+         Rt(inds,inds) = (1*pi/180)^2*eye(link(ll).nDof);     %assume position uncertainty equivalent to 5 degrees
     end
+    nDof = nDof + link(ll).nDof;
 end
+    
+
         

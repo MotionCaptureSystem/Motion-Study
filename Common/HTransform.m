@@ -15,7 +15,7 @@ H = eye(4,4);
 
 jj = 1;
 path = kinpath(link,links(1),links(end));
-q = q(1:length([link(path).StateInds]),1);
+q = q([link(path).StateInds],1);
 for ll = path
     %if identification kernal is DH -> pull out vars accordingly
     if strcmp(link(ll).IDkern,'DH')

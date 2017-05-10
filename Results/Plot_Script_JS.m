@@ -2,6 +2,7 @@ function Plot_Script_JS(camstruct, eststruct, options)
 %% Plot 3D Points
 camstruct = camstruct(options.est.cams);
 features = eststruct.ukf.Features;
+
 kinc = eststruct.kinc;
 pts = options.plot.pts;
 npts = size([options.link.BFvecs],2);
@@ -10,7 +11,7 @@ nsteps = size(features,2);
 figure
 hold on
 cnt = 0;
-for pp = 1:length(pts)
+for pp = 1:length(pts(2:end))
     cnt = cnt+1;
     feat_manip = eye(4)*[features(3*(pp-1)+1:3*pp,:);ones(1,size(features,2))];%1000*YPRTransform([0,-15/180*pi,-5/180*pi],[.300,1.200,.400])*[0,1,0,0;0,0,1,0;1,0,0,0;0,0,0,1]';
     plot3(feat_manip(1,:)',feat_manip(2,:)', feat_manip(3,:)', '-.','Color',options.plot.colors(cnt,:))
@@ -19,7 +20,7 @@ end
 plot_kin_chain(kinc, options, [1:5:length(kinc)]);
 xlabel('x (mm)',options.plot.fig_txt_props{:}); ylabel('y (mm)',options.plot.fig_txt_props{:}); zlabel('z (mm)',options.plot.fig_txt_props{:}); 
 H = reshape([camstruct.H],4,4,[]);
-%CFPlot(H,0.005)
+CFPlot(H,20)
 
 axis tight
 axis equal

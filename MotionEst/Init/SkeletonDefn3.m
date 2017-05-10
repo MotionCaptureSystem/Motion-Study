@@ -32,7 +32,7 @@
 % Node Names and Parent-Child Info
 %             Node Name   Parent    Child       Connecting Point       Group   ID Kernal  
 NodeNames   = {'BB'      ,   [] ,    [2],            [],                1,      'YPR';
-              'RHum'     ,   [1],    [3],            [2],               1,      'DH';
+              'RHum'     ,   [1],    [3],            [3],               1,      'DH';
               'RRad'     ,   [2],    [4,5,6],        [1],               1,      'DH';
               'RD3Met'   ,   [3],    [],             [1],               1,      'DH'; 
               'RD4Met'   ,   [3],    [],             [1],               1,      'DH';
@@ -104,7 +104,7 @@ synthConfig.link(nn).alphas  = [pi/2; -pi/2; pi/2];
 synthConfig.link(nn).disps   = [0;0;hum_len];
 synthConfig.link(nn).offsets = [0;0;0];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).pt_nums = [6,5];
+synthConfig.link(nn).pt_nums = [6];
 nn = nn+1;
 %----------------------------------Raduis CF Defn---------------------------------------
 rad_len = 70;
@@ -114,7 +114,7 @@ synthConfig.link(nn).alphas  = [0];
 synthConfig.link(nn).disps   = [0];
 synthConfig.link(nn).offsets = rad_len;
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).pt_nums = [7,6];
+synthConfig.link(nn).pt_nums = [7];
 nn = nn+1;
 
 %----------------------------------Digit 3 Metacarpal CF Defn---------------------------------------
@@ -124,7 +124,7 @@ synthConfig.link(nn).alphas  = [pi/2;0];
 synthConfig.link(nn).disps   = [0;0];
 synthConfig.link(nn).offsets = [0;met3_len];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).pt_nums = [8,7];
+synthConfig.link(nn).pt_nums = [8];
 nn = nn+1;
 
 %----------------------------------Digit 4 Metacarpal CF Defn---------------------------------------
@@ -134,7 +134,7 @@ synthConfig.link(nn).alphas  = [pi/2;0];
 synthConfig.link(nn).disps   = [0;0];
 synthConfig.link(nn).offsets = [0;met4_len];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).pt_nums = [9,7];
+synthConfig.link(nn).pt_nums = [9];
 nn = nn+1;
 %----------------------------------Digit 5 Metacarpal CF Defn---------------------------------------
 met5_len   = 70;
@@ -143,7 +143,7 @@ synthConfig.link(nn).alphas  = [pi/2;0];
 synthConfig.link(nn).disps   = [0;0];
 synthConfig.link(nn).offsets = [0;70];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).pt_nums = [10,7];
+synthConfig.link(nn).pt_nums = [10];
 nn = nn+1;
 
 %% Create an articulated mechanism
@@ -174,6 +174,7 @@ synthConfig.link(5).BFvecs(:,1) = [0,0,0]';
 %link 6
 synthConfig.link(6).BFvecs(:,1) = [0,0,0]';
 %synthConfig.link(6).BFvecs(:,2) = [-met5_len,0,0]';
+
 
 figure
 plot_kin_chain(synthConfig,synthConfig,1)

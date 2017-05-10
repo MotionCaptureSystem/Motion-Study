@@ -31,20 +31,14 @@
 fprintf('Creating Kinematic Definition...\n')
 % Node Names and Parent-Child Info
 %             Node Name   Parent    Child       Connecting Point       Group   ID Kernal  
-NodeNames   = {'BB_1'     ,   [] ,   [1,2],             [],                1,      'DH';        %1
-               'BB_2'     ,   [1],  [3],            [1],               1,      'DH';            %2
-               'RHum'     ,   [2],   [4],          [1],               2,      'DH';             %3
-               'RRad'     ,   [3],   [7]           [1],               2,      'DH';             %4
-               'LHum'     ,   [1],   [6],          [2],               2,      'DH';             %5
-               'LRad'     ,   [5],   [11],           [1],               2,      'DH';           %6
-               'RWrist'   ,   [4],   [8,9,10],      [1],               3,      'DH';            %7
-               'RD3Met'   ,   [7],   [],             [1],               3,      'DH';           %8
-               'RD4Met'   ,   [7],   [],             [1],               3,      'DH';           %9
-               'RD5Met'   ,   [7],   [],             [1],               3,      'DH';           %10
-               'LWrist'   ,   [6],  [12,13,14],      [1],               3,      'DH';           %11
-               'LD3Met'   ,   [11],  [],             [1],               3,      'DH';           %12
-               'LD4Met'   ,   [11],  [],             [1],               3,      'DH';           %13
-               'LD5Met'   ,   [11],  [],             [1],               3,      'DH'};          %14
+NodeNames   = {'BB_1'     ,   [] ,    [],             [],                1,      'DH';
+               'BB_2'     ,   [1] ,   [3],            [1],               1,      'DH';
+               'LHum'     ,   [1]+1,  [3]+1,          [1],               2,      'DH';
+               'LRad'     ,   [2]+1,  [4]+1           [1],               2,      'DH';
+               'LWrist'   ,   [3]+1,  [5,6,7]+1,      [1],               3,      'DH';
+               'RD3Met'   ,   [4]+1,  [],             [1],               3,      'DH'; 
+               'RD4Met'   ,   [4]+1,  [],             [1],               3,      'DH';
+               'RD5Met'   ,   [4]+1,  [],             [1],               3,      'DH'};
            
 nnodes = size(NodeNames,1);
 
@@ -115,23 +109,12 @@ fprintf('---------------------------------------------------\n')
 %specifiy the points which are on each link
 synthConfig.link(1).pt_nums   = [105,141];
 synthConfig.link(2).pt_nums   = [100,105];
-
-synthConfig.link(3).pt_nums = [93,100];
-synthConfig.link(4).pt_nums = [87,89,91,93];
-
-synthConfig.link(5).pt_nums  = [144,141];
-synthConfig.link(6).pt_nums = [174,172,144];
-
-synthConfig.link(7).pt_nums = [87,87];
-synthConfig.link(8).pt_nums = [46,54,87];
-synthConfig.link(9).pt_nums = [49,56,87];
-synthConfig.link(10).pt_nums = [44,58,87];
-
-synthConfig.link(11).pt_nums = [174,174];
-synthConfig.link(12).pt_nums = [207,211,174];
-synthConfig.link(13).pt_nums = [190,192,174];
-synthConfig.link(14).pt_nums = [167,170,174];
-
+synthConfig.link(2+1).pt_nums = [93,100];
+synthConfig.link(3+1).pt_nums = [87,89,91,93];
+synthConfig.link(4+1).pt_nums = [87,87];
+synthConfig.link(5+1).pt_nums = [46,54,87];
+synthConfig.link(6+1).pt_nums = [49,56,87];
+synthConfig.link(7+1).pt_nums = [44,58,87];
 %load the stereo triangulation data
 load([options.path,filesep,'StereoStruct.mat']);
 npair = length(Stereo);         %determine the number of cameras pairs
@@ -166,35 +149,45 @@ for ll = 1:length(synthConfig.link)
     elseif ll==2
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
-   elseif regexp(synthConfig.link(kk).nnames, '.*Hum.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = [0,-norm(mean_delta(:,pp)),0]';
-        end
+    elseif ll==2+1
+        vectors(:,1) = [0,0,0]';
+        vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
         %vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
-    elseif regexp(synthConfig.link(kk).nnames, '.*Rad.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = [-norm(mean_delta(:,pp)),0,0]';
-        end
+    elseif ll==3+1
+        vectors(:,1) = [norm(mean_delta(:,1)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
+        vectors(:,4) = [-norm(mean_delta(:,4)),0,0]';
 %         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
-    elseif regexp(synthConfig.link(kk).nnames, '.*Wrist.*')
+    elseif ll == 4+1
         vectors(:,1) = [0,0,0]';
         vectors(:,2) = [0,0,0]';
-        
-    elseif regexp(synthConfig.link(kk).nnames, '.*Met.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = [-norm(mean_delta(:,pp)),0,0]';
-        end
+    elseif ll==5+1
+        vectors(:,1) = [-norm(mean_delta(:,1)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
+%         vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+%         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
+    elseif ll==6+1
+        vectors(:,1) = [-norm(mean_delta(:,1)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
+    elseif ll==7+1
+        vectors(:,1) = [-norm(mean_delta(:,1)),0,0]';
+        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
+        vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
     end
+    
     BFvecs{ll} = vectors;
 end
 
 %% Define DH params
 nn = 1;
 %----------------------------------Base Body CF Defn---------------------------------------
-synthConfig.link(nn).thetas  = [0;-pi/2;0;0;-pi/2;0];
-synthConfig.link(nn).alphas  = [-pi/2; -pi/2; 0;-pi/2;-pi/2;0];
-synthConfig.link(nn).disps   = [0;0;0;0;0;0];
-synthConfig.link(nn).offsets = [0;0;0;0;0;norm(BFvecs{nn}(:,end))];
+synthConfig.link(nn).thetas  = [0;-pi/2;-pi/2;0;pi/2;pi/2];
+synthConfig.link(nn).alphas  = [-pi/2; -pi/2; -pi/2;pi/2;pi/2;pi/2];
+synthConfig.link(nn).disps   = [0;0;0;0;0;-norm(BFvecs{nn}(:,end))];
+synthConfig.link(nn).offsets = [0;0;0;0;0;0];
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end);
 nn = nn+1;
@@ -207,10 +200,6 @@ synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthCon
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
 
-%----------------------------------------------------------------------------------------
-%----------------------------------- Right Arm -----------------------------------------
-%----------------------------------------------------------------------------------------
-
 %----------------------------------Humerus CF Defn---------------------------------------
 %hum_len = 60;
 synthConfig.link(nn).thetas  = [0;0;0];%pi/2;-pi/2];
@@ -231,35 +220,6 @@ synthConfig.link(nn).offsets = norm(BFvecs{nn}(:,end));
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
-
-%----------------------------------------------------------------------------------------
-%----------------------------------- Left Arm -----------------------------------------
-%----------------------------------------------------------------------------------------
-
-%----------------------------------Humerus CF Defn---------------------------------------
-%hum_len = 60;
-synthConfig.link(nn).thetas  = [0;0;0];%pi/2;-pi/2];
-synthConfig.link(nn).alphas  = [pi/2; -pi/2; pi/2];
-synthConfig.link(nn).disps   = [0;0;norm(BFvecs{nn}(:,end))];
-synthConfig.link(nn).offsets = [0;0;0];
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
-%----------------------------------Raduis CF Defn---------------------------------------
-%rad_len = 70;
-gamma = 85/180*pi;
-synthConfig.link(nn).thetas  = [0];
-synthConfig.link(nn).alphas  = [pi/2];
-synthConfig.link(nn).disps   = [0];
-synthConfig.link(nn).offsets = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
-%----------------------------------------------------------------------------------------
-%----------------------------------- Right Hand -----------------------------------------
-%----------------------------------------------------------------------------------------
 
 %----------------------------------Wrist CF Defn---------------------------------------
 %rad_len = 70;
@@ -300,50 +260,6 @@ synthConfig.link(nn).offsets = [0;met5_len];
 synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
-%----------------------------------------------------------------------------------------
-%------------------------------------ Left Hand -----------------------------------------
-%----------------------------------------------------------------------------------------
-
-%----------------------------------Wrist CF Defn---------------------------------------
-%rad_len = 70;
-gamma = 85/180*pi;
-synthConfig.link(nn).thetas  = [0];
-synthConfig.link(nn).alphas  = [-pi/2];
-synthConfig.link(nn).disps   = [0];
-synthConfig.link(nn).offsets = 0;
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = [];
-nn = nn+1;
-
-%----------------------------------Digit 3 Metacarpal CF Defn---------------------------------------
-met3_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [pi/4;0];
-synthConfig.link(nn).alphas  = [pi/2;0];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;met3_len];
-synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
-%----------------------------------Digit 4 Metacarpal CF Defn---------------------------------------
-met4_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [pi/2;0];
-synthConfig.link(nn).alphas  = [pi/2;0];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;met4_len];
-synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-%----------------------------------Digit 5 Metacarpal CF Defn---------------------------------------
-met5_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [3*pi/4;0];
-synthConfig.link(nn).alphas  = [pi/2;0];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;met5_len];
-synthConfig.link(nn).H = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
 
 
 fprintf('------------------- DH  Table ---------------------\n')
