@@ -21,7 +21,7 @@ for cc = 1:ncam
     index_cal  = find(options.cams_cal == cams(cc));
     cam_num = cams(cc);
     %load and store extrinsics
-    t   = -Ce(:,index_cal);
+    t   = Ce(:,index_cal);
     Rot = Re(3*index_cal-2:3*index_cal,:)';
     if ~isempty(Rot) && ~isempty(t)
         camstruct(cam_num).H = [Rot,t;0,0,0,1];
@@ -36,7 +36,7 @@ for cc = 1:ncam
     if fid >0
         data = textscan(fid,'%s%s%f');      %Read the data
         %A hard lesson learned: K matrix from cal file must be negated
-        camstruct(cam_num).K = -[data{3}(13:15)';data{3}(16:18)';data{3}(19:21)'];
+        camstruct(cam_num).K = [data{3}(13:15)';data{3}(16:18)';data{3}(19:21)'];
     end
     
     %Open the .rad file

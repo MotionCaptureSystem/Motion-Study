@@ -393,7 +393,7 @@ function extrinsic_svoboda_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 %%import all available calibration_menu parameters
-[handles.options, handles.Cam] = load_svoboda_cal4(handles.Cam, handles.options);
+[handles.options, handles.Cam] = load_svoboda_cal5(handles.Cam, handles.options);
 guidata(hObject,handles);
 
 

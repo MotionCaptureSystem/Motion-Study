@@ -46,18 +46,18 @@ NodeNames   = {'BB_1'       ,   [] ,   [2,3],          [],               1,     
                'LD3Met'     ,   [12],  [16],           [1],              3,      'DH';        %13
                'LD4Met'     ,   [12],  [],             [1],              3,      'DH';        %14
                'LD5Met'     ,   [12],  [],             [1],              3,      'DH';        %15
-               'LD3Phal1'   ,   [13],  [17],           [1],              4,      'DH';        %16%%%%%%%%%%%
-               'LD3Phal2'   ,   [16],  [],             [1],              4,      'DH';        %17
-               'LD4Phal1'   ,   [14],  [19],           [1],              4,      'DH';        %18
-               'LD4Phal2'   ,   [18],  [],             [1],              4,      'DH';        %19
-               'LD5Phal1'   ,   [15],  [21],           [1],              4,      'DH';        %20
-               'LD5Phal2'   ,   [20],  [],             [1],              4,      'DH';        %21
-               'RD3Phal1'   ,   [9],   [23],           [1],              4,      'DH';        %22%%%%%%%%%%%
-               'RD3Phal2'   ,   [22],  [],             [1],              4,      'DH';        %23
-               'RD4Phal1'   ,   [10],  [25],           [1],              4,      'DH';        %24
-               'RD4Phal2'   ,   [24],  [],             [1],              4,      'DH';        %25
-               'RD5Phal1'   ,   [11],  [27],           [1],              4,      'DH';        %26
-               'RD5Phal2'   ,   [26],  [],             [1],              4,      'DH'};       %27
+               'LD3Phal1'   ,   [13],  [20],           [1],              4,      'DH';        %16 %%%%%%%%%%%
+               'LD4Phal1'   ,   [14],  [21],           [1],              4,      'DH';        %17
+               'LD5Phal1'   ,   [15],  [22],           [1],              4,      'DH';        %18
+               'RD3Phal1'   ,   [9],   [23],           [1],              4,      'DH';        %19 %%%%%%%%%%%
+               'RD4Phal1'   ,   [10],   [24],           [1],              4,      'DH';        %20
+               'RD5Phal1'   ,   [11],  [25],           [1],              4,      'DH';        %21
+               'LD3Phal2'   ,   [16],  [],             [1],              5,      'DH';        %22
+               'LD4Phal2'   ,   [17],  [],             [1],              5,      'DH';        %23
+               'LD5Phal2'   ,   [18],  [],             [1],              5,      'DH';        %24
+               'RD3Phal2'   ,   [19],  [],             [1],              5,      'DH';        %25
+               'RD4Phal2'   ,   [20],  [],             [1],              5,      'DH';        %26
+               'RD5Phal2'   ,   [21],  [],             [1],              5,      'DH'};       %27
            
 nnodes = size(NodeNames,1);
 
@@ -137,80 +137,32 @@ synthConfig.link(6).pt_nums  = [144,141];
 synthConfig.link(7).pt_nums = [174,172,144];
 
 synthConfig.link(8).pt_nums = [87,87];
-synthConfig.link(9).pt_nums = [46,54,87];
-synthConfig.link(10).pt_nums = [49,56,87];
+synthConfig.link(9).pt_nums = [47,54,87];
+synthConfig.link(10).pt_nums = [41,56,87];
 synthConfig.link(11).pt_nums = [44,58,87];
 
 synthConfig.link(12).pt_nums = [174,174];
-synthConfig.link(13).pt_nums = [207,211,174];
+synthConfig.link(13).pt_nums = [208,212,174];
 synthConfig.link(14).pt_nums = [190,192,174];
 synthConfig.link(15).pt_nums = [167,170,174];
 
-synthConfig.link(16).pt_nums = [203,207];
-synthConfig.link(17).pt_nums = [201,203];
-synthConfig.link(18).pt_nums = [188,190];
-synthConfig.link(19).pt_nums = [187,188];
-synthConfig.link(20).pt_nums = [166,167];
-synthConfig.link(21).pt_nums = [165,166];
+synthConfig.link(16).pt_nums = [203,208];
+synthConfig.link(17).pt_nums = [188,190];
+synthConfig.link(18).pt_nums = [166,167];
+synthConfig.link(19).pt_nums = [37,47];
+synthConfig.link(20).pt_nums = [21,41];
+synthConfig.link(21).pt_nums = [25,44];
 
-synthConfig.link(22).pt_nums = [37,46];
-synthConfig.link(23).pt_nums = [1,37];
-synthConfig.link(24).pt_nums = [21,49];
-synthConfig.link(25).pt_nums = [4,21];
-synthConfig.link(26).pt_nums = [25,44];
+synthConfig.link(22).pt_nums = [201,203];
+synthConfig.link(23).pt_nums = [187,188];
+synthConfig.link(24).pt_nums = [165,166];
+synthConfig.link(25).pt_nums = [1,37];
+synthConfig.link(26).pt_nums = [4,21];
 synthConfig.link(27).pt_nums = [8,25];
 
-%load the stereo triangulation data
-load([options.path,filesep,'StereoStruct.mat']);
-npair = length(Stereo);         %determine the number of cameras pairs
 
-for ll = 1:length(synthConfig.link)
-    vectors = [];
-    nvecs = length(synthConfig.link(ll).pt_nums);
-    delta = zeros(3,size(Stereo(1).pts,2),nvecs,npair);
-    for vec = 1:nvecs
-        for pair = 1:npair
-            delta(:,:,vec,pair) = Stereo(pair).pts(:,:,synthConfig.link(ll).pt_nums(vec))-Stereo(pair).pts(:,:,synthConfig.link(ll).pt_nums(1));
-        end
-    end
-    
-    mean_delta = nanmedian(delta,4);
-    std_delta_pair = nanstd(delta,0,4);
-    std_delta_time = nanstd(delta,0,2);
-    mean_delta = nanmedian(mean_delta,2);
-    mean_delta = squeeze(mean_delta);
-
-    if ll==1
-        vectors(:,1) = [0,0,0]';
-        vectors(:,2) = [0,0,0]';
-    elseif regexp(synthConfig.link(ll).nnames, '.*BB.*')
-        vectors(:,1) = [0,0,0]';
-        vectors(:,2) = [-norm(mean_delta(:,2)),0,0]';
-   elseif regexp(synthConfig.link(ll).nnames, '.*Hum.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = [0,-norm(mean_delta(:,pp)),0]';
-        end
-        %vectors(:,2) = [0,-norm(mean_delta(:,2)),0]';
-    elseif regexp(synthConfig.link(ll).nnames, '.*Rad.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = [-norm(mean_delta(:,pp)),0,0]';
-        end
-%         vectors(:,3) = [-norm(mean_delta(:,3)),0,0]';
-    elseif regexp(synthConfig.link(ll).nnames, '.*Wrist.*')
-        vectors(:,1) = [0,0,0]';
-        vectors(:,2) = [0,0,0]';
-        
-    elseif regexp(synthConfig.link(ll).nnames, '.*Met.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = [-norm(mean_delta(:,pp)),0,0]';
-        end
-    elseif regexp(synthConfig.link(ll).nnames, '.*Phal.*')
-        for pp = 1:size(mean_delta,2)
-            vectors(:,pp) = 1.2*[-norm(mean_delta(:,pp)),0,0]';
-        end
-    end
-    BFvecs{ll} = vectors;
-end
+%load the BFVectors
+load('C:\ShandongData2016\BatFlight_20160717\config\Bat_I\BFVECS.mat')
 
 %% Define DH params
 nn = 1;
@@ -389,16 +341,6 @@ synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthCon
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
 
-%------------------------------------ Digit3 Phal2 -----------------------------------------
-phal_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [0;0];
-synthConfig.link(nn).alphas  = [pi/2;-pi/2];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;phal_len];
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
 %------------------------------------ Digit4 Phal 1 -----------------------------------------
 phal_len   = norm(BFvecs{nn}(:,end));
 synthConfig.link(nn).thetas  = [0;0];
@@ -409,27 +351,7 @@ synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthCon
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
 
-%------------------------------------ Digit4 Phal2 -----------------------------------------
-phal_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [0;0];
-synthConfig.link(nn).alphas  = [pi/2;-pi/2];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;phal_len];
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
 %------------------------------------ Digit5 Phal 1 -----------------------------------------
-phal_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [0;0];
-synthConfig.link(nn).alphas  = [pi/2;-pi/2];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;phal_len];
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
-%------------------------------------ Digit5 Phal2 -----------------------------------------
 phal_len   = norm(BFvecs{nn}(:,end));
 synthConfig.link(nn).thetas  = [0;0];
 synthConfig.link(nn).alphas  = [pi/2;-pi/2];
@@ -452,27 +374,8 @@ synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthCon
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
 
-%------------------------------------ Digit3 Phal2 -----------------------------------------
-phal_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [0;0];
-synthConfig.link(nn).alphas  = [pi/2;-pi/2];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;phal_len];
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
 
 %------------------------------------ Digit4 Phal 1 -----------------------------------------
-phal_len   = norm(BFvecs{nn}(:,end));
-synthConfig.link(nn).thetas  = [0;0];
-synthConfig.link(nn).alphas  = [pi/2;-pi/2];
-synthConfig.link(nn).disps   = [0;0];
-synthConfig.link(nn).offsets = [0;phal_len];
-synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
-synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
-nn = nn+1;
-
-%------------------------------------ Digit4 Phal2 -----------------------------------------
 phal_len   = norm(BFvecs{nn}(:,end));
 synthConfig.link(nn).thetas  = [0;0];
 synthConfig.link(nn).alphas  = [pi/2;-pi/2];
@@ -491,6 +394,59 @@ synthConfig.link(nn).offsets = [0;phal_len];
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
 synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
 nn = nn+1;
+
+%------------------------------------ Digit3 Phal2 -----------------------------------------
+phal_len   = norm(BFvecs{nn}(:,end));
+synthConfig.link(nn).thetas  = [0;0];
+synthConfig.link(nn).alphas  = [pi/2;-pi/2];
+synthConfig.link(nn).disps   = [0;0];
+synthConfig.link(nn).offsets = [0;phal_len];
+synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
+nn = nn+1;
+
+
+%------------------------------------ Digit4 Phal2 -----------------------------------------
+phal_len   = norm(BFvecs{nn}(:,end));
+synthConfig.link(nn).thetas  = [0;0];
+synthConfig.link(nn).alphas  = [pi/2;-pi/2];
+synthConfig.link(nn).disps   = [0;0];
+synthConfig.link(nn).offsets = [0;phal_len];
+synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
+nn = nn+1;
+
+%------------------------------------ Digit5 Phal2 -----------------------------------------
+phal_len   = norm(BFvecs{nn}(:,end));
+synthConfig.link(nn).thetas  = [0;0];
+synthConfig.link(nn).alphas  = [pi/2;-pi/2];
+synthConfig.link(nn).disps   = [0;0];
+synthConfig.link(nn).offsets = [0;phal_len];
+synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
+nn = nn+1;
+
+%------------------------------------ Digit3 Phal2 -----------------------------------------
+phal_len   = norm(BFvecs{nn}(:,end));
+synthConfig.link(nn).thetas  = [0;0];
+synthConfig.link(nn).alphas  = [pi/2;-pi/2];
+synthConfig.link(nn).disps   = [0;0];
+synthConfig.link(nn).offsets = [0;phal_len];
+synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
+nn = nn+1;
+
+
+%------------------------------------ Digit4 Phal2 -----------------------------------------
+phal_len   = norm(BFvecs{nn}(:,end));
+synthConfig.link(nn).thetas  = [0;0];
+synthConfig.link(nn).alphas  = [pi/2;-pi/2];
+synthConfig.link(nn).disps   = [0;0];
+synthConfig.link(nn).offsets = [0;phal_len];
+synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
+synthConfig.link(nn).BFvecs  = BFvecs{nn}(:,1:end-1);
+nn = nn+1;
+
 
 %------------------------------------ Digit5 Phal2 -----------------------------------------
 phal_len   = norm(BFvecs{nn}(:,end));

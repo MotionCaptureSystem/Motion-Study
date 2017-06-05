@@ -58,9 +58,13 @@ for pair = [1:npair]
     for pp = 1:npts_loop
         for kk = 1:nsteps
             %if ~isempty(intersect(pp,camstruct(pair_list(pair,1)).idin(1,pp))) && ~isempty(intersect(pp,camstruct(pair_list(pair,2)).idin(1,pp)))
+            if ~(size(camstruct1.pts_sync,3)<pts(pp) || size(camstruct2.pts_sync,3)<pts(pp))
                 stereostruct(pair).pts(:,kk,pts(pp)) = stertridet2(camstruct1.pts_sync(:,timesteps(kk)-camstruct1.start_frame+1+floor(camstruct1.sync_del*fs_c),pts(pp)), ...
-                                                   camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs_c),pts(pp)), ...
-                                                   camstruct1,camstruct2);
+                                                        camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs_c),pts(pp)), ...
+                                                        camstruct1,camstruct2);
+            else
+                stereostruct(pair).pts(:,kk,pts(pp)) = NaN*ones(3,length(timesteps));
+            end
         end
     end
     if size(stereostruct(pair).pts,3) < npts

@@ -19,7 +19,7 @@ clear a
 
 %% Load the Calibration
 fprintf('Loading Calibration Parameters ...\n')
-options.cams = [1:10];
+options.cams = [1:21];
 % %cal_tech intrinsics
 % %Cam = load_caltech_intrinsic(Cam, options, options.cams);
 % %Svoboda Extrinsics

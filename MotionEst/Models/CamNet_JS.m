@@ -17,11 +17,11 @@ for gg = 1:g_max
     end
 end
 
+
 last_group_links = get_group_links(link,g_max);
+cams  = options.est.cams;
 
-cams = options.est.cams;
-
-ncam = length(cams);
+ncam  = length(cams);
 nmeas = ncam*length([link(links).MeasInds]);
 
 Pi0 = [1,0,0,0;0,1,0,0];
@@ -45,7 +45,7 @@ uncert = {[1,1,1],[1,1,1],[1,1,1],[1,1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],...
           [1,1,1],[1,1,1],[1,1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]};
 scale=5;
 
-uncert = cellfun(@(x) x*scale,uncert,'un',0);
+%uncert = cellfun(@(x) x*scale,uncert,'un',0);
 %uncert = {[1,1,1],[3,1],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
 %uncert = {[1,1,1,1,1],[1],[1],[1],[1],[1],[1]};
 for cc = 1:ncam         %for each camera

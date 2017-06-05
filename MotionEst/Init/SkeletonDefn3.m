@@ -42,12 +42,12 @@ nnodes = length(NodeNames);
 
 for nn = 1:nnodes 
     
-synthConfig.link(nn).nnames = NodeNames{nn,1};
-synthConfig.link(nn).parent = NodeNames{nn,2};
-synthConfig.link(nn).child  = NodeNames{nn,3};
-synthConfig.link(nn).ConPt  = NodeNames{nn,4};
-synthConfig.link(nn).Group  = NodeNames{nn,5};
-synthConfig.link(nn).IDkern = NodeNames{nn,6};
+    synthConfig.link(nn).nnames = NodeNames{nn,1};
+    synthConfig.link(nn).parent = NodeNames{nn,2};
+    synthConfig.link(nn).child  = NodeNames{nn,3};
+    synthConfig.link(nn).ConPt  = NodeNames{nn,4};
+    synthConfig.link(nn).Group  = NodeNames{nn,5};
+    synthConfig.link(nn).IDkern = NodeNames{nn,6};
 
 end
 
@@ -56,7 +56,7 @@ end
 DOFAssign = {'BB', 6; 'Hum', 3; 'Rad', 1; 'Met', 2; 'Phal', 1};
 
 %Cycle through labels and assign NDOFs
-for ii = 1:length(DOFAssign);
+for ii = 1:length(DOFAssign)
     %Get current node label 
     cmpstr = strcat('.*',DOFAssign(ii,1),'.*');
     nlist = [];
@@ -78,8 +78,8 @@ for ii = 1:length(DOFAssign);
 end
 
 %Dof Type Specification (1 for translational, 0 for rotational)
-for ii = 1:length(synthConfig.link);
-    if synthConfig.link(ii).nDof == 6;
+for ii = 1:length(synthConfig.link)
+    if synthConfig.link(ii).nDof == 6
         synthConfig.link(ii).tDof = [1,1,1,0,0,0];
     else
         synthConfig.link(ii).tDof = zeros(1,synthConfig.link(ii).nDof);

@@ -15,23 +15,26 @@ for ll = link_nums
     
     inds = nDof+1:nDof + link(ll).nDof;
     if ll == 1
-        sigmas = [10^2*ones(1,3),(0.5*pi/180)^2*ones(1,link(ll).nDof-3)];
+        sigmas = [5^2*ones(1,3),(1*pi/180)^2*ones(1,link(ll).nDof-3)];
         Rt(inds,inds) = diag(sigmas);
-
+        
+    elseif regexp(link(ll).nnames, '.*Hum.*')
+         Rt(inds,inds) = (10*pi/180)^2*eye(link(ll).nDof);
+         
+    elseif regexp(link(ll).nnames, '.*Rad.*')
+         Rt(inds,inds) = (10*pi/180)^2*eye(link(ll).nDof);
+         
     elseif regexp(link(ll).nnames, '.*Met.*')
+         Rt(inds,inds) = (5*pi/180)^2*eye(link(ll).nDof);
 
-         Rt(inds,inds) = (3*pi/180)^2*eye(link(ll).nDof);
-
-    elseif  regexp(link(ll).nnames, '.*phal.*')
-
-         Rt(inds,inds) = (8*pi/180)^2*eye(link(ll).nDof);
+    elseif  regexp(link(ll).nnames, '.*Phal.*')
+         Rt(inds,inds) = (5*pi/180)^2*eye(link(ll).nDof);
          
     elseif  regexp(link(ll).nnames, '.*Wrist.')
-
          Rt(inds,inds) = (2*pi/180)^2*eye(link(ll).nDof);
 
     else
-         Rt(inds,inds) = (1*pi/180)^2*eye(link(ll).nDof);     %assume position uncertainty equivalent to 5 degrees
+         Rt(inds,inds) = (20*pi/180)^2*eye(link(ll).nDof);     %assume position uncertainty equivalent to 5 degrees
     end
     nDof = nDof + link(ll).nDof;
 end

@@ -2,7 +2,7 @@ function [y_bark, lambdas] = CamNetDistortion(x_k, camstruct)
 
 cams = [];
 for cc = 1:length(camstruct)
-   if ~isempty(camstruct(cc).pts)
+   if ~isempty(camstruct(cc).H)
        cams = [cams, cc];
    end
 end

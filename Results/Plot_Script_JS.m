@@ -87,7 +87,7 @@ legend_handles = [];
             hold on
             legend_handles(length(legend_handles)+1) = plot(t,eststruct.ukf.X(dof+dof_prev,:),options.plot.linespec1{dof});
             clear title xlabel ylabel
-            title([options.link_names{ll},' Displacements',],options.plot.fig_txt_props{:})
+            title([options.link(ll).nnames,' Displacements',],options.plot.fig_txt_props{:})
             xlabel('time (s)',options.plot.fig_txt_props{:})
             ylabel('Displacement',options.plot.fig_txt_props{:})
             axis tight
@@ -95,7 +95,7 @@ legend_handles = [];
             clear title xlabel ylabel
             hold on
             legend_handles(length(legend_handles)+1) = plot(t,180/pi*eststruct.ukf.X(dof+dof_prev,:),options.plot.linespec1{dof});
-            title([options.link_names{ll},' Rotations'],options.plot.fig_txt_props{:})
+            title([options.link(ll).nnames,' Rotations'],options.plot.fig_txt_props{:})
             xlabel('time (s)',options.plot.fig_txt_props{:})
             ylabel('Angle (deg)',options.plot.fig_txt_props{:})
             axis tight

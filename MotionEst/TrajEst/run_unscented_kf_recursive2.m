@@ -198,25 +198,25 @@ for ii = 3:size(z,2) % for all timesteps
         % Line 12: Update state measurement and cov
         mu = mu_bar + K*(z_minus_occlusions-z_hat); %use stripped msmt
         Sig = Sig_bar - K*S*K';                     
-        if strcmp(options.est.type, 'joint')
-            if gg == 1
-                for xx = 4:length(mu)
-                    if mu(xx) < mu_0(xx) - pi
-                        mu(xx) = mu(xx) + 2*pi;
-                    elseif mu(xx) > mu_0(xx) + pi 
-                        mu(xx) = mu(xx) - 2*pi;
-                    end
-                end
-            else
-                for xx = 1:length(mu)
-                    if mu(xx) < mu_0(state_inds(xx)) - pi
-                        mu(xx) = mu(xx) + 2*pi;
-                    elseif mu(xx) > mu_0(state_inds(xx)) + pi 
-                        mu(xx) = mu(xx) - 2*pi;
-                    end
-                end
-            end
-        end
+%         if strcmp(options.est.type, 'joint')
+%             if gg == 1
+%                 for xx = 4:length(mu)
+%                     if mu(xx) < mu_0(xx) - pi
+%                         mu(xx) = mu(xx) + 2*pi;
+%                     elseif mu(xx) > mu_0(xx) + pi 
+%                         mu(xx) = mu(xx) - 2*pi;
+%                     end
+%                 end
+%             else
+%                 for xx = 1:length(mu)
+%                     if mu(xx) < mu_0(state_inds(xx)) - pi
+%                         mu(xx) = mu(xx) + 2*pi;
+%                     elseif mu(xx) > mu_0(state_inds(xx)) + pi 
+%                         mu(xx) = mu(xx) - 2*pi;
+%                     end
+%                 end
+%             end
+%         end
                 
         % Accumulate measurements into function outputs
         X(state_inds,ii) = mu;
