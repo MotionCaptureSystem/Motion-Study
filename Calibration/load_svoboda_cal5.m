@@ -23,7 +23,11 @@ for cc = 1:ncam
     %load and store extrinsics
     t   = Ce(:,index_cal);
     Rot = Re(3*index_cal-2:3*index_cal,:)';
+
     if ~isempty(Rot) && ~isempty(t)
+        quatern = dcm2quat(Rot);
+        n_quat = quatnormalize(quatern);
+        Rot = quat2dcm(n_quat);
         camstruct(cam_num).H = [Rot,t;0,0,0,1];
     end
     %Load and store distortion parameters
@@ -58,4 +62,10 @@ for cc = 1:ncam
     %camstruct(cam_num).pts_dist(:,outliers)  = NaN;
 
     fclose('all');
+    if ~isempty(Rot)
+        H(:,:,index_cal) = camstruct(cam_num).H;
+    end
 end
+figure
+CFPlot(H,0.03);
+axis equal

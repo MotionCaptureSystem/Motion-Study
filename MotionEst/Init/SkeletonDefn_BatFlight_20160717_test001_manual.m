@@ -194,8 +194,8 @@ nn = nn+1;
 
 %----------------------------------Humerus CF Defn---------------------------------------
 %hum_len = 60;
-synthConfig.link(nn).thetas  = [0;0;0];%pi/2;-pi/2];
-synthConfig.link(nn).alphas  = [pi/2; -pi/2; pi/2];
+synthConfig.link(nn).thetas  = [0;pi/2;pi/2];%pi/2;-pi/2];
+synthConfig.link(nn).alphas  = [pi/2; pi/2; pi/2];
 synthConfig.link(nn).disps   = [0;0;1.25*norm(BFvecs{nn}(:,end))];
 synthConfig.link(nn).offsets = [0;0;0];
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);
@@ -221,8 +221,8 @@ nn = nn+1;
 
 %----------------------------------Humerus CF Defn---------------------------------------
 %hum_len = 60;
-synthConfig.link(nn).thetas  = [0;0;0];%pi/2;-pi/2];
-synthConfig.link(nn).alphas  = [pi/2; -pi/2; pi/2];
+synthConfig.link(nn).thetas  = [0;pi/2;pi/2];%pi/2;-pi/2];
+synthConfig.link(nn).alphas  = [pi/2; pi/2; pi/2];
 synthConfig.link(nn).disps   = [0;0;norm(BFvecs{nn}(:,end))];
 synthConfig.link(nn).offsets = [0;0;0];
 synthConfig.link(nn).H       = DHTransforms(synthConfig.link(nn).thetas,synthConfig.link(nn).alphas,synthConfig.link(nn).disps,synthConfig.link(nn).offsets);

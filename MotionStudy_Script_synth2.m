@@ -19,26 +19,26 @@ clear a
 
 %% Load the Calibration
 fprintf('Loading Calibration Parameters ...\n')
-options.cams = 1:21;%setdiff(1:21,[11,12,15]);
+options.cams = [301,302,306,309:314,318,319,322,324,327,328,331,334,337,338,340,341]-300;%setdiff(1:21,[11,12,15]);
 options.ucs_size = norm(Cam(options.cams(1)).H(1:3))/100;
 
 %% Rectify and Synchronise Points
 Cam = rectify(Cam,options.cams);
-options.fs_c = 120;
+options.fs_c = 480;
 Cam = sync_cams(Cam);
 %% Perform Stereo Triangulation
 options.stereo.cams = options.cams;
-options.stereo.pts = [105,100,141,93,87,89,91,144,174,172,...
-                       47,54,41,56,44,58,...
-                       208,212,190,192,167,170,...
-                       203,188,166,...
-                       37,21,25,...
-                       201,187,165,...
-                       1,4,8];
+options.stereo.pts = [105,1,201];%,100,141,93,87,89,91,144,174,172,...
+%                        47,54,41,56,44,58,...
+%                        208,212,190,192,167,170,...
+%                        203,188,166,...
+%                        37,21,25,...
+%                        201,187,165,...
+%                        1,4,8];
                    
 options.stereo.tstart = 1;
 options.stereo.dt = 1;
-options.stereo.tstop = 60;
+options.stereo.tstop = 240;
 options.plot.colors = hsv(length(options.stereo.pts));
 
 fprintf('Running Stereo Triangulation ... \n')
@@ -63,7 +63,7 @@ options.dof_names       = {'X', 'Y', 'Z', '\theta_r', '\theta_p','\theta_y','\th
                             '\theta_{41}','\theta_{42}','\theta_{43}','\theta_{44}','\theta_{45}','\theta_{46}','\theta_{47}','\theta_{48}','\theta_{49}','\theta_{50}'};
                         
 options.tstart          = 1;       %Note: due to sync delay the first 
-options.tstop           = 60;       %Useable timestep will be tstart+1 
+options.tstop           = 240;       %Useable timestep will be tstart+1 
 options.dt              = 1;
 options.interp          = 1;         %1- data Was NOT interpolated, 0- otherwise;
 
@@ -79,7 +79,7 @@ options.est.tstop           = options.tstop - options.tstart+1;
 
 % Define the Skeleton
 root_name = 'SkeletonDefn_BatFlight_20160717_test001_';
-kindef = {'manual'};
+kindef = {'synth'};
 %% 
 for ee = 1%1:length(kindef)
     clear synthConfig
@@ -160,12 +160,12 @@ for ee = 1%1:length(kindef)
                                    0.329769914029514
                                   -0.389446798129548
                                    1.707969017278865
-                                  -1.113085600272337
-                                   5.049023155303150
+                                  45*pi/180
+                                  25*pi/180
                                    0.416517979137193
                                   -1.801190647877094
-                                  -1.281075906252739
-                                   1.119170043654953
+                                  45*pi/180
+                                   150*pi/180
                                    0.281143643375966
                                   -0.136233947640512
                                   -0.143218252411895
@@ -234,13 +234,13 @@ for ee = 1%1:length(kindef)
         % Run UKF 
         %[X_ekf, Sig_X_ekf, mat_mags_ekf] = run_extended_kf(x_km1, Sigma_k, zeros(3*npts,nsteps), meas, state_update_model, state_jac, msmt_model, msmt_jac, Rt_handle);
 
-%         [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive_condind(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
-%                                                                        options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
-%                                                                        options.est.Rt_handle, options);
+        [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive_condind(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
+                                                                       options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
+                                                                       options.est.Rt_handle, options);
                                                                    
-        [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
-                                                                   options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
-                                                                   options.est.Rt_handle, options);
+%         [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
+%                                                                    options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
+%                                                                    options.est.Rt_handle, options);
     else
         [X_ukf, Sig_X_ukf, meas] = run_unscented_kf_track2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
                                                                        options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
@@ -302,8 +302,8 @@ for ee = 1%1:length(kindef)
         eststruct.ukf.Features = X_ukf;
     end
 
-%     save([kindef{ee},'.mat'],'-v7.3')
-%     fclose('all');
+    save([kindef{ee},'.mat'],'-v7.3')
+    fclose('all');
 end
 %% Plot State Results
 plot_states(Cam,eststruct,options)

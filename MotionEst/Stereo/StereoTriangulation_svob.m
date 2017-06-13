@@ -63,7 +63,7 @@ for pair = [1:npair]
                                                         camstruct2.pts_sync(:,timesteps(kk)-camstruct2.start_frame+1+floor(camstruct2.sync_del*fs_c),pts(pp)), ...
                                                         camstruct1,camstruct2);
             else
-                stereostruct(pair).pts(:,kk,pts(pp)) = NaN*ones(3,length(timesteps));
+                stereostruct(pair).pts(:,kk,pts(pp)) = NaN*ones(3,1);
             end
         end
     end

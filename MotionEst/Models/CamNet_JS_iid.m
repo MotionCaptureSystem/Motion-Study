@@ -1,4 +1,4 @@
-function [y_bark, Qk] = CamNet_JS(x_k, camstruct, options)
+function [y_bark, Qk] = CamNet_JS_iid(x_k, camstruct, options)
 
 nstates = length(x_k);
 link    = options.link;
@@ -31,7 +31,7 @@ cams = options.est.cams;
 ncam = length(cams);
 nmeas = ncam*length([link(links).MeasInds]);
 
-Pi0 = [1,0,0,0;0,1,0,0];
+Pi0 = [1,0,0,0;0,1,0,0;0,0,1,0];
 z_hat = [0;0;1;0];
 if isempty(link(links(1)).BFvecs)
     MeasStart = link(links(2)).MeasInds(1);   
@@ -49,7 +49,7 @@ Qk = zeros(length(y_bark));
 uncert = {[1,1,1],[1,1,1],[1,1,1],[1,1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],...
           [1,1,1],[1,1,1],[1,1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1],[1,1,1],...
           [1,1,1],[1,1,1],[1,1,1,1],[1,1,1],[1,1,1,1],[1,1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1],[1,1,1]};
-scale=0.1;
+scale=5;
 
 uncert = cellfun(@(x) x*scale,uncert,'un',0);
 %uncert = {[1,1,1],[3,1],[3,3,3],[3,3],[8,5,3],[8,5,3],[8,3]};
@@ -68,7 +68,8 @@ for cc = 1:ncam         %for each camera
             lambda = z_hat'*Hin*H_ll*x_lpi; 
             %Determine Sensor Model Jacobian
             ndx = nmeas/ncam*(cc-1)+link(ll).MeasInds(2*pp-1:2*pp)-MeasStart+1;
-            y_bark(ndx) = 1/lambda*Pi0*[camstruct(cams(cc)).K,[0;0;0];0,0,0,1]*Hin*H_ll*x_lpi;
+            y_bar_int = 1/lambda*camstruct(cams(cc)).K*Pi0*Hin*H_ll*x_lpi;
+            y_bark(ndx) = y_bar_int(1:2)/y_bar_int(3);
 %             p = [camstruct(cams(cc)).foc_l;
 %                  camstruct(cams(cc)).skew; 
 %                  camstruct(cams(cc)).prin_p;

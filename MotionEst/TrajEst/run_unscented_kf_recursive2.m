@@ -197,6 +197,12 @@ for ii = 3:size(z,2) % for all timesteps
 
         % Line 12: Update state measurement and cov
         mu = mu_bar + K*(z_minus_occlusions-z_hat); %use stripped msmt
+%         if gg == 3
+%             figure
+%             hold on
+%             plot(z_minus_occlusions(1:2:end),z_minus_occlusions(2:2:end),'+k')
+%             plot(z_hat(1:2:end),z_hat(2:2:end),'+m')
+%         end
         Sig = Sig_bar - K*S*K';                     
 %         if strcmp(options.est.type, 'joint')
 %             if gg == 1

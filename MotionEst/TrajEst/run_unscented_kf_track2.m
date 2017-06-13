@@ -249,7 +249,7 @@ for ii = 3:size(z,2) % for all timesteps
 %                     n_correct(cc,ii) = sum(phi_corr==phi)/2;
 %                 end
                 %Create a figure to display the correspondences
-                if 1%any(~isnan(phi)) && gg == 3
+                if 0%any(~isnan(phi)) && gg == 3
 %                     figure
 %                     imshow(im_k)
 %                     hold on

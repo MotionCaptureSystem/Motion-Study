@@ -34,7 +34,7 @@ for ll = link_nums
          Rt(inds,inds) = (2*pi/180)^2*eye(link(ll).nDof);
 
     else
-         Rt(inds,inds) = (20*pi/180)^2*eye(link(ll).nDof);     %assume position uncertainty equivalent to 5 degrees
+         Rt(inds,inds) = (10*pi/180)^2*eye(link(ll).nDof);     %assume position uncertainty equivalent to 5 degrees
     end
     nDof = nDof + link(ll).nDof;
 end

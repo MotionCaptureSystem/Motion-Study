@@ -19,7 +19,7 @@ clear a
 
 %% Load the Calibration
 fprintf('Loading Calibration Parameters ...\n')
-options.cams = [301, 302, 306, 309, 310, 311, 312, 313, 314, 318, 319, 322, 324, 327, 328, 331, 334, 337, 338, 340, 341];
+options.cams = [301, 302, 306, 309, 310, 311, 312, 313, 314, 318, 319, 322, 324, 327, 328, 334, 337, 338, 340, 341];
 %cal_tech intrinsics
 %Cam = load_caltech_intrinsic(Cam, options, options.cams);
 %Svoboda Extrinsics
@@ -33,8 +33,9 @@ Cam = rectify(Cam,options.cams);
 options.fs_c = 120;
 Cam = sync_cams(Cam);
 %% Perform Stereo Triangulation
-options.stereo.cams = options.cams;
-options.stereo.pts = [1:250];
+options.stereo.cams = [306, 309, 310, 312, 313, 314, 318, 319, 322, 324, 327, 328, 334, 337, 338, 340, 341];%options.cams;
+%options.stereo.pts = [100,105,141,93,87,58,56,54,44,41,47,25,21,37,8,4,1,144,174,170,192,212,167,190,208,166,188,203,165,187,201];
+options.stereo.pts = [105,1,201];
 options.stereo.tstart = 368;
 options.stereo.dt = 1;
 options.stereo.tstop = 452;
@@ -47,7 +48,7 @@ save([options.path,filesep,'StereoStruct.mat'],'Stereo')
 %% Load Initialization Options
 %[Cam,options] = Init_Flight_BatFlight_20160717_test001_flexBB(Cam,options);
 options.est.type        = 'joint';
-options.groups          = [1];
+options.groups          = [1,2,3,4,5];
 options.link_names      = {'Body Link 1','Body Yaw','Body Flex','R Humerus','R Radius','L Humerus','L Radius',...%'R Wrist', ...
                            'R Metacarpal 3', 'R Metacarpal 4','R Metacarpal 5',...%'L Wrist',
                            'L Metacarpal 3', 'L Metacarpal 4','L Metacarpal 5'...
@@ -71,7 +72,7 @@ options.default_dir     = pwd;
 options.fs              = options.fs_c;
 
 %Trajectory Estimation Options
-options.est.cams            = [301,302,310:314,318,319,322,324,327,328,331,337,338,340];%[301,302,306,309:314,318,319,322,324,327,328,331,334,337,338,340,341];
+options.est.cams            = [306, 309, 310, 312, 313, 314, 318, 319, 322, 324, 327, 328, 334, 337, 338, 340, 341];
 options.est.groups          = options.groups;
 options.est.tstart          = 1;
 options.est.tstop           = options.tstop - options.tstart+1;
@@ -83,6 +84,7 @@ kindef = {'noWrist',...%'flexBB_both_wings',...'2dofPhal',...
           '2dofPhal_noWrist2',...
           '1dofPhal',...
           '1dofPhal2_noWrist'};
+      
 %% 
 for ee = 2%1:length(kindef)
     clear synthConfig
@@ -137,11 +139,11 @@ for ee = 2%1:length(kindef)
     sum_of_start = nanmedian(start_pts,2);
     body_arm_init      = [0,0,0,...
                            0,0*pi/180,...
-                           20*pi/180,...
                            -20*pi/180,...
-                           90*pi/180,   0*pi/180,  200*pi/180,... %right arm
+                           20*pi/180,...
+                           -105*pi/180,   0*pi/180,  -180*pi/180,... %right arm
                            0,...  
-                           -90*pi/180, 0*pi/180, 120*pi/180,...   %left arm
+                           105*pi/180, 0*pi/180, 0*pi/180,...   %left arm
                            0];%,   0, 0,...%right hand
     options.est.state_init = [body_arm_init,zeros(1,sum([options.link.nDof])-length(body_arm_init))]';
     %                                0,   0,0,...
@@ -173,7 +175,7 @@ for ee = 2%1:length(kindef)
     %   of the marker positions in body-frame (comes from param.mkr) and exact
     %   orientation of the body in 3D space (comes from the upper-left of the H
     %   matrix at every timestep)
-    options.est.msmt_model = @(x, t) CamNet_JS(x, Cam, options);
+    options.est.msmt_model = @(x, t) CamNet_JS_iid(x, Cam, options);
     %%Run the Estimator
     %[EstStruct, options] = traj_estimation(Cam(options.est.cams), options);
 
@@ -187,13 +189,13 @@ for ee = 2%1:length(kindef)
         % Run UKF 
         %[X_ekf, Sig_X_ekf, mat_mags_ekf] = run_extended_kf(x_km1, Sigma_k, zeros(3*npts,nsteps), meas, state_update_model, state_jac, msmt_model, msmt_jac, Rt_handle);
 
-        [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive_condind(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
-                                                                       options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
-                                                                       options.est.Rt_handle, options);
+%         [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive_condind(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
+%                                                                        options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
+%                                                                        options.est.Rt_handle, options);
                                                                    
-%         [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
-%                                                                    options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
-%                                                                    options.est.Rt_handle, options);
+        [X_ukf, Sig_X_ukf]      = run_unscented_kf_recursive2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
+                                                                   options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
+                                                                   options.est.Rt_handle, options);
     else
         [X_ukf, Sig_X_ukf, meas] = run_unscented_kf_track2(options.est.x_km1, options.est.Sigma_k, zeros(options.nstate,nsteps), ...
                                                                        options.est.meas, options.est.state_update_model, options.est.msmt_model, ...
@@ -265,9 +267,9 @@ figure
 for kk = 1:length(eststruct.kinc)
     clf
     plot_kin_chain(eststruct.kinc(kk),options,1,1)
-    axis([-100,2000,-300,300,-300,200])
-    %axis([-100,150,-500,500,-150,150])
-    view([-129.2,38.4])
+     axis([-100,2000,-300,300,-300,200])
+%     %axis([-100,150,-500,500,-150,150])
+     view([-129.2,38.4])
     %view([-108.1,49.9])
     grid on
     set(gca,options.plot.fig_txt_props{:})
